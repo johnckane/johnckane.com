@@ -1,0 +1,13 @@
+---
+title: Simple Linear Regression With Tensorflow
+author: John Kane
+date: '2017-12-11'
+slug: simple-linear-regression-with-tensorflow
+categories:
+  - tensorflow
+  - python
+tags:
+  - tensorflow
+  - python
+---
+

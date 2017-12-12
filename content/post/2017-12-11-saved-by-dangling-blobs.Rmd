@@ -1,0 +1,13 @@
+---
+title: Saved by Dangling Blobs
+author: John Kane
+date: '2017-12-11'
+slug: saved-by-dangling-blobs
+categories:
+  - git
+  - version-control
+tags:
+  - git
+  - version-control
+---
+
