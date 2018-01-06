@@ -1,0 +1,10 @@
+Ideas
+=====
+- simple lineaar regression with tensorflow
+- plot images of numbers
+- covariance in fantasy football
+  * for mid-level players, does it help or hurt?
+  * for top-level players, does it matter?
+- idea of rolling dice every week
+  * need to have high enough players "hit" every week to score enough points to win
+  * lots of players boom or bust, but is expected value of boom vs. bust worth it?

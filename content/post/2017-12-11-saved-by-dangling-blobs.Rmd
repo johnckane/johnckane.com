@@ -11,3 +11,61 @@ tags:
   - version-control
 ---
 
+
+```{python engine.path="/usr/bin/python"}
+import numpy as np
+
+np.random.randn(10)
+```
+
+## What I want to provide
+
+perhaps a google search result for someone who discovers they did the same thing I did and hope that they may be able to recover them. 
+
+For most of 2017 I have worked on a project and stored the files locally, not doing version control with git. As the project matured I realized I would soon need to share the code and to make use of all git has to offer, I should connect it to a repository. The order in which I did it mattered.
+
+Let's illustrate with an example.
+
+Let's say you have some files in a directory
+
+image of files via ls
+
+```{bash}
+cd /home/john
+mkdir sample-dir
+cd sample-dir
+echo 'this is file1' > file1.txt
+echo 'this is file2' > file2.txt
+ls -l
+echo ' '
+echo 'now print the contents of the files'
+cat file1.txt
+cat file2.txt
+```
+
+So in this scenario we start to think that it would be nice to connect this files to a github repository.
+
+
+
+
+```{r}
+
+```
+
+## What's the lesson?
+
+Commit, commit, commit!
+
+As stated in a Stack Overflow [post](link) anything that is committed can be 
+
+Another realization is that when it is appropriate to commit. 
+
+Should you:
+- commit every time you edit/save a file? that seems excessive.
+- commit every time you make a major change? that seems to infrequent
+
+When to push commits?
+- tempted to push every day to see and show off that you "worked" that day
+
+These are questions that likely have "good" or at least moderately well accepted answers in software development circles. Likely data science circles
+as well. But this is all very new to me (which is hopefully apparent by the fact that I nearly lost six months of work by attempting to use git).
