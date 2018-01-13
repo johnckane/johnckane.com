@@ -6,10 +6,19 @@
     <description>Recent content on John Kane</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-US</language>
-    <lastBuildDate>Mon, 21 Dec 2015 04:05:25 -0600</lastBuildDate>
+    <lastBuildDate>Mon, 11 Dec 2017 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Saved by Dangling Blobs</title>
+      <link>/post/saved-by-dangling-blobs/</link>
+      <pubDate>Mon, 11 Dec 2017 00:00:00 +0000</pubDate>
+      
+      <guid>/post/saved-by-dangling-blobs/</guid>
+      <description></description>
+    </item>
     
     <item>
       <title>Les Misérables by Victor Hugo</title>

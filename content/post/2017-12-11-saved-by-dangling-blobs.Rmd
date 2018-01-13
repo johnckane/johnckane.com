@@ -43,7 +43,7 @@ cat file1.txt
 cat file2.txt
 ```
 
-So in this scenario we start to think that it would be nice to connect this files to a github repository.
+So in this scenario we start to think that it would be nice to connect these files to a github repository.
 
 
 
