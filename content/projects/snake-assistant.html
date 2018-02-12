@@ -1,0 +1,60 @@
+---
+title: "Snake Draft Assistant"
+output: html_document
+---
+
+
+
+<p>This application recommends selections by position based on how much value they add to your team compared to the players likely to be available the next to time you select.</p>
+<p>It does this by analyzing:</p>
+<ol style="list-style-type: decimal">
+<li>Predicted points per game of every player</li>
+<li>Your roster</li>
+<li>Average draft position</li>
+</ol>
+<p><a href="http://ec2-54-213-112-234.us-west-2.compute.amazonaws.com:3838/stats-corner/2016/snake-assistant/">Jump to the app here</a> or read the analytical details below.</p>
+<div id="predicted-points-per-game" class="section level3">
+<h3>Predicted Points Per Game</h3>
+<p>Many websites produce preseason forecasts of player PPG. The site <a href="http://fantasyfootballanalytics.net/">FantasyFootballAnalytics</a> aggregates those predictions and produces a weighted average that <a href="http://fantasyfootballanalytics.net/2017/03/best-fantasy-football-projections-2017.html">proves to be more accurate</a> than any once source.</p>
+<p>I am a subscriber to the site and downloaded their data for use in the app.</p>
+</div>
+<div id="your-roster" class="section level3">
+<h3>Your Roster</h3>
+<p>Roster analysis consists of three components:</p>
+<ol style="list-style-type: decimal">
+<li>Roster settings</li>
+<li>Your current roster</li>
+<li>BYE weeks of your current roster</li>
+</ol>
+<div id="roster-settings" class="section level5">
+<h5>Roster Settings</h5>
+<p>Before you draft input the position limits of your starting lineup.</p>
+<p>For example: 1 QB, 2 RBs, 2 WRs, 1 TE, 1 FLEX, 1 DST and 1 K.</p>
+<p>The app can handle leagues with either FLEX (RB/WR/TE) or OP (QB/RB/WR/TE) positions.</p>
+</div>
+<div id="your-current-roster" class="section level5">
+<h5>Your current roster</h5>
+<p>As you draft players and enter them into the app a weekly starting lineup is assembled based on roster limits and the expected number of points scored each week is calculated. If your starting lineup for a certain position has met its limit then a player will be considered for FLEX/OP. But if they aren’t good enough to crack your starting lineup at any position then they add 0 points to your roster no matter what their projected PPG are.</p>
+</div>
+<div id="taking-bye-weeks-into-account" class="section level5">
+<h5>Taking BYE weeks into account</h5>
+<p>When a player has a BYE, of course they don’t play. When your team amasses multiple BYEs in a given week, you’ll be stretched thin and likely lose. These recommendations take BYE weeks into account and will elevate players who do not have overlapping BYEs with players at the same position.</p>
+</div>
+</div>
+<div id="average-draft-position" class="section level3">
+<h3>Average Draft Position</h3>
+<p>To make recomendations the app compares the Value Added by each player not against everyone other available player, but against the players most likely to remain in the draft pool the next time you pick (based on yourorder in the draft sequence).</p>
+<p>For example, let’s say you have the first pick in a 10 team league.</p>
+<p>Antonio Brown is recommended to be the top pick not because his projected PPG (17.3) is that much greater than Julio Jones (#2 WR, 15.4 PPG), but because the next time you draft the best available WR is likely to be Alshon Jeffrey whose predicted 12.3 PPG is a 5 point dropoff, far greater than the dropoff at any other position.</p>
+</div>
+<div id="check-it-out" class="section level3">
+<h3>Check It Out!</h3>
+<p><a href="http://ec2-54-213-112-234.us-west-2.compute.amazonaws.com:3838/stats-corner/2016/snake-assistant/">You can check out the app here</a> or <a href="github.com/johnckane/stats_corner/2016/snake_assistant">access the code here</a>.</p>
+<p>Feedback? contact me at statscorner[at]gmail[dot]com.</p>
+<div id="document-history" class="section level6">
+<h6>Document History</h6>
+</div>
+<div id="intially-published-april-26-2017" class="section level6">
+<h6>Intially Published: April 26, 2017</h6>
+</div>
+</div>

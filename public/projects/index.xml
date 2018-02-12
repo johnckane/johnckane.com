@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Projects on John Kane</title>
+    <link>/projects/</link>
+    <description>Recent content in Projects on John Kane</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-US</language>
+    
+	<atom:link href="/projects/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Snake Draft Assistant</title>
+      <link>/projects/snake-assistant/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/projects/snake-assistant/</guid>
+      <description>This application recommends selections by position based on how much value they add to your team compared to the players likely to be available the next to time you select.
+It does this by analyzing:
+Predicted points per game of every player Your roster Average draft position  Jump to the app here or read the analytical details below.
+Predicted Points Per Game Many websites produce preseason forecasts of player PPG.</description>
+    </item>
+    
+  </channel>
+</rss>

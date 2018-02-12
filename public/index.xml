@@ -32,5 +32,17 @@ The site is built with Hugo—a static site generator made with Go. The website 
 The primary font face is Open Sans and the monospace font face is Ubuntu Mono. The social icons are from the Ionicons font set. CSS classes for code syntax highlighting are inserted during compile-time by Hugo using Pygments.</description>
     </item>
     
+    <item>
+      <title>Snake Draft Assistant</title>
+      <link>/projects/snake-assistant/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/projects/snake-assistant/</guid>
+      <description>This application recommends selections by position based on how much value they add to your team compared to the players likely to be available the next to time you select.
+It does this by analyzing:
+Predicted points per game of every player Your roster Average draft position  Jump to the app here or read the analytical details below.
+Predicted Points Per Game Many websites produce preseason forecasts of player PPG.</description>
+    </item>
+    
   </channel>
 </rss>
