@@ -3,7 +3,17 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
-    <loc>/post/saved-by-dangling-blobs/</loc>
+    <loc>/post/functions-and-environments/</loc>
+    <lastmod>2018-02-02T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/drafts/saved-by-dangling-blobs/</loc>
+    <lastmod>2017-12-11T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/drafts/simple-linear-regression-with-tensorflow/</loc>
     <lastmod>2017-12-11T00:00:00+00:00</lastmod>
   </url>
   
@@ -48,7 +58,41 @@
   </url>
   
   <url>
+    <loc>/drafts/2018-02-02-environments-and-functions/</loc>
+  </url>
+  
+  <url>
     <loc>/categories/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/drafts/</loc>
+    <lastmod>2017-12-11T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/tags/environments/</loc>
+    <lastmod>2018-02-02T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/categories/environments/</loc>
+    <lastmod>2018-02-02T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/tags/functions/</loc>
+    <lastmod>2018-02-02T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/categories/functions/</loc>
+    <lastmod>2018-02-02T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
@@ -66,7 +110,7 @@
   
   <url>
     <loc>/</loc>
-    <lastmod>2017-12-11T00:00:00+00:00</lastmod>
+    <lastmod>2018-02-02T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
@@ -78,13 +122,31 @@
   
   <url>
     <loc>/post/</loc>
+    <lastmod>2018-02-02T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/tags/python/</loc>
     <lastmod>2017-12-11T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
+    <loc>/categories/python/</loc>
+    <lastmod>2017-12-11T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/tags/r/</loc>
+    <lastmod>2018-02-02T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
     <loc>/categories/r/</loc>
-    <lastmod>2015-07-23T21:13:14-05:00</lastmod>
+    <lastmod>2018-02-02T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
@@ -102,6 +164,18 @@
   
   <url>
     <loc>/tags/</loc>
+    <lastmod>2018-02-02T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/tags/tensorflow/</loc>
+    <lastmod>2017-12-11T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/categories/tensorflow/</loc>
     <lastmod>2017-12-11T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>

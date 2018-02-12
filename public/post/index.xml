@@ -6,18 +6,19 @@
     <description>Recent content in Post on John Kane</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-US</language>
-    <lastBuildDate>Mon, 11 Dec 2017 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Fri, 02 Feb 2018 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/post/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
-      <title>Saved by Dangling Blobs</title>
-      <link>/post/saved-by-dangling-blobs/</link>
-      <pubDate>Mon, 11 Dec 2017 00:00:00 +0000</pubDate>
+      <title>R Functions and Environments</title>
+      <link>/post/functions-and-environments/</link>
+      <pubDate>Fri, 02 Feb 2018 00:00:00 +0000</pubDate>
       
-      <guid>/post/saved-by-dangling-blobs/</guid>
-      <description></description>
+      <guid>/post/functions-and-environments/</guid>
+      <description>The content of this post nearly became a Stack Overflow question. In the process of going about making a reproducible example I solved the problem, as often happens. It took a bit of time to stich together several other SO posts before I arrived at it. Hopefully when someone else comes across the issue maybe this will provide some immediate assistance.
+The following is the reprex I went about writing to include in the Stack Overflow post.</description>
     </item>
     
   </channel>

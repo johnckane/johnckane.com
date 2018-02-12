@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="chrome=1">
+<meta name="HandheldFriendly" content="True">
+<meta name="MobileOptimized" content="320">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer">
+<meta name="author" content="John C. Kane">
+<meta name="description" content="The content of this post nearly became a Stack Overflow question. In the process of going about making a reproducible example I solved the problem, as often happens. It took a bit of time to stich together several other SO posts before I arrived at it. Hopefully when someone else comes across the issue maybe this will provide some immediate assistance.
+The following is the reprex I went about writing to include in the Stack Overflow post.">
+
+<meta property="og:title" content="R Functions and Environments" />
+<meta property="og:description" content="The content of this post nearly became a Stack Overflow question. In the process of going about making a reproducible example I solved the problem, as often happens. It took a bit of time to stich together several other SO posts before I arrived at it. Hopefully when someone else comes across the issue maybe this will provide some immediate assistance.
+The following is the reprex I went about writing to include in the Stack Overflow post." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="/post/functions-and-environments/" />
+
+
+
+<meta property="article:published_time" content="2018-02-02T00:00:00&#43;00:00"/>
+<meta property="article:modified_time" content="2018-02-02T00:00:00&#43;00:00"/>
+
+
+
+
+
+
+
+
+
+
+
+
+<title>
+
+
+     R Functions and Environments 
+
+</title>
+<link rel="canonical" href="/post/functions-and-environments/">
+
+
+
+
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.11.0/styles/default.min.css">
+
+
+
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,700|Ubuntu+Mono:400,400i,700,700i|Raleway:500">
+
+
+
+    
+    <link rel="stylesheet" href="/css/reset.css?t=2018-02-11%2019%3a38%3a52.847346617%20-0600%20CST%20m%3d%2b0.027863822">
+    <link rel="stylesheet" href="/css/pygments.css?t=2018-02-11%2019%3a38%3a52.847346617%20-0600%20CST%20m%3d%2b0.027863822">
+    <link rel="stylesheet" href="/css/main.css?t=2018-02-11%2019%3a38%3a52.847346617%20-0600%20CST%20m%3d%2b0.027863822">
+    
+        <link rel="stylesheet" href="/css/override.css?t=2018-02-11%2019%3a38%3a52.847346617%20-0600%20CST%20m%3d%2b0.027863822">
+    
+
+
+
+
+<link rel="shortcut icon"
+
+    href="/img/leaf.ico"
+
+>
+
+
+
+
+
+
+
+
+</head>
+
+
+<body lang="en">
+
+<section class="header">
+    <div class="container">
+        <div class="content">
+            
+                
+                
+                
+                
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                
+                <a href="/"><img class="avatar" src="/img/jkane-78color.jpg" srcset="/img/jkane-78color.jpg 1x"></a>
+            
+            <a href="/"><div class="name">John C. Kane</div></a>
+            
+            <nav>
+                <ul>
+                    
+                        <li class="nav-blog"><a href="/blog/"><span>Blog</span></a></li>
+                    
+                        <li class="nav-projects"><a href="/projects/"><span>Projects</span></a></li>
+                    
+                        <li class="nav-about"><a href="/about/"><span>About</span></a></li>
+                    
+                </ul>
+            </nav>
+        </div>
+    </div>
+</section>
+
+<section class="icons">
+    <div class="container">
+        <div class="content">
+
+        
+            <a href="//github.com/you" target="_blank" rel="noopener"><img class="icon" src="/img/github.svg" alt="github" /></a>
+        
+
+        
+            <a href="//twitter.com/you" target="_blank" rel="noopener"><img class="icon" src="/img/twitter.svg" alt="twitter" /></a>
+        
+
+        
+
+        
+
+        
+            <a href="//linkedin.com/in/you" target="_blank" rel="noopener"><img class="icon" src="/img/linkedin.svg" alt="linkedin" /></a>
+        
+
+        
+
+        
+            
+        
+
+        
+
+        
+            <a href="mailto:you@example.space"><img class="icon" src="/img/email.svg" alt="email" /></a>
+        
+
+        
+            <a href="/index.xml"><img class="icon" src="/img/rss.svg" alt="rss" /></a>
+        
+        
+        </div>
+    </div>
+</section>
+
+<section class="main">
+    <div class="container">
+        <div class="content">
+            <div class="page-heading">
+
+    R Functions and Environments
+
+</div>
+
+            <div class="markdown">
+                <p>The content of this post nearly became a Stack Overflow question. In the process of going about making a <a href="https://stackoverflow.com/questions/5963269/how-to-make-a-great-r-reproducible-example">reproducible example</a> I solved the problem, as often happens. It took a bit of time to stich together several other SO posts before I arrived at it. Hopefully when someone else comes across the issue maybe this will provide some immediate assistance.</p>
+<p>The following is the reprex I went about writing to include in the Stack Overflow post. Suspend your judgment of what this code actually accomplishes to focus on the issues of functions and environments.</p>
+<p>In the global environment I have the following list, which I call <code>lookup</code>. The purpose of this list is to be able to lookup a <code>value</code> based solely on a numeric value.</p>
+<pre class="r"><code>library(dplyr)
+lookup &lt;- list(code = c(1,2,3),
+                value = c(&#39;df1&#39;,&#39;df2&#39;,&#39;df3&#39;))</code></pre>
+<p>To illustrate what’s going I’ll use two “function familes,” for lack of a better word, <code>f</code> and <code>g</code>. Throughout this post I’ll refer to different variants of the <code>f</code> and <code>g</code> functions by using <code>f1</code>,<code>g1</code>,<code>f2</code>,<code>g2</code>, etc.</p>
+<ul>
+<li>The <code>f</code> functions conditionally create dataframes. They takes as its lone argument a vector of integers.</li>
+<li>The <code>g</code> functions process each dataframe created in <code>f</code> in a similar way, by unlisting and printing it. The <code>g</code> functions are called from the <code>f</code> functions through an <code>lapply</code> call.</li>
+</ul>
+<pre class="r"><code>f1 &lt;- function(x){
+  
+  if(1 %in% x){
+    df1 &lt;- data.frame(a = 1:2, b=3:4)
+  }
+   
+  if(2 %in% x){
+    df2 &lt;- data.frame(a = 11:15, b= 16:20)
+  } 
+ 
+  if(3 %in% x){
+    df3 &lt;- data.frame(a = 100, b = 200)
+  }
+  
+  lapply(x,g1) %&gt;% rm() # lapply returns a list, in this case it would be a NULL list so pass that to rm(). 
+}  
+
+g1 &lt;- function(y){
+  
+  object_name &lt;- lookup[[&quot;value&quot;]][[y]]
+  
+  get(object_name) %&gt;%
+    unlist() %&gt;%
+    print()
+}</code></pre>
+<div id="initial-testing" class="section level3">
+<h3>Initial testing</h3>
+<p>Since we’re calling <code>g</code> from within <code>f</code> we want to make sure that <code>g</code> works outside of <code>f</code>. That way if <code>f</code> fails then we wouldn’t think that it was because of <code>g</code>.</p>
+<p>When we create <code>df1</code> in the global environment and want to unlist and print it, we can call <code>g1(1)</code> and it works like we’d expect.</p>
+<pre class="r"><code>df1 &lt;- data.frame(a = 1:2, b=3:4)
+g1(1)</code></pre>
+<pre><code>## a1 a2 b1 b2 
+##  1  2  3  4</code></pre>
+<p>However when we attempt to conditionally create <code>df1</code> and pass it to <code>g1</code> (that is call <code>f1(1)</code>) it fails:</p>
+<pre class="r"><code>f1(1)</code></pre>
+<pre><code>## Error in get(object_name): object &#39;df1&#39; not found</code></pre>
+</div>
+<div id="why-didnt-that-work" class="section level3">
+<h3>Why didn’t that work?</h3>
+<p>The best way I can think to describe it is that the function <code>g</code> doesn’t have any of the objects <code>df1</code>, <code>df2</code>, or <code>df3</code> in the local environment created on execution. So it goes and looks for them in <code>.GlobalEnv</code> where they are shielded by the environment of <code>f</code>. So it appears that <code>g</code> can’t cross into <code>f</code>’s environment to use things created there.</p>
+<p>This is my attempt at illustrating the R environment I created:</p>
+<div class="figure">
+<img src="/home/john/johnckane.com/static/img/environment1.png" />
+
+</div>
+<p>So a solution would be to tell <code>g</code> to explicitly look in <code>f</code>’s environment. What is the name of the environment created when <code>f</code> is executed? Consider the function <code>f2</code> which prints the name of the environment that dataframe <code>df1</code> is created in.</p>
+<pre class="r"><code>f2&lt;- function(x){
+  df1 &lt;- data.frame(a = 1:2, b=3:4)
+  print(environment(df1))
+}  
+f2(1)</code></pre>
+<pre><code>## NULL</code></pre>
+<p>The <code>NULL</code> environment? I’m genuinely not sure what to make of that. So if we can’t tell g what the environment of <code>f</code> is that the dataframes are created in, what can we do?</p>
+</div>
+<div id="explicitly-create-a-new-named-environment" class="section level3">
+<h3>Explicitly create a new, named environment</h3>
+<p>Consider this function <code>f3</code>. This creates an new environment with the call to <code>new.env()</code> then assigns any dataframes created by the function to that environment. For the sake of consistency call the <code>g</code> function called by <code>f3</code> <code>g3</code>, I’m skipping <code>g2</code>. <code>g3</code> takes an additional argument beyond the vector of integers, an environment to look in.</p>
+<pre class="r"><code>f3 &lt;- function(y){
+  
+ e &lt;- new.env()
+ 
+ if(1 %in% y){
+   e$df1 &lt;- data.frame(a = 1:2, b=3:4)
+  }
+
+ if(2 %in% y){
+  e$df2 &lt;- data.frame(a = 11:15, b= 16:20)
+  }
+
+ if(3 %in% y){
+  e$df3 &lt;- data.frame(a = 100, b = 200)
+ }
+
+ lapply(y,g3,look_in = e) %&gt;% rm()
+
+}
+
+g3 &lt;- function(y,look_in){
+  
+  object_name &lt;- lookup[[&quot;value&quot;]][[y]]
+  
+  get(object_name, envir = look_in) %&gt;%
+    unlist() %&gt;%
+    print()
+}</code></pre>
+<p>Test on some new data:</p>
+<pre class="r"><code>t1 &lt;- c(1,3)
+t2 &lt;- c(2,3)
+f3(t1)</code></pre>
+<pre><code>## a1 a2 b1 b2 
+##  1  2  3  4 
+##   a   b 
+## 100 200</code></pre>
+<pre class="r"><code>f3(t2)</code></pre>
+<pre><code>## a1 a2 a3 a4 a5 b1 b2 b3 b4 b5 
+## 11 12 13 14 15 16 17 18 19 20 
+##   a   b 
+## 100 200</code></pre>
+<p>Now it works!</p>
+<p>Note that the environment created within <code>f3</code> does not persist after the function executes:</p>
+<pre class="r"><code>ls(envir = e)</code></pre>
+<pre><code>## Error in ls(envir = e): object &#39;e&#39; not found</code></pre>
+</div>
+<div id="alternatively-assign-to-global-environment-with--" class="section level3">
+<h3>Alternatively, assign to global environment with <code>&lt;&lt;-</code></h3>
+<p>An alternate solution would be to assign the dataframes to the global environment directly. We’ll do so with functions <code>f4</code> and <code>g4</code>.</p>
+<pre class="r"><code>f4 &lt;- function(y){
+  
+  if(1 %in% y){
+   df1 &lt;&lt;- data.frame(a = 1:2, b=3:4)
+  }
+
+ if(2 %in% y){
+  df2 &lt;&lt;- data.frame(a = 11:15, b= 16:20)
+  }
+
+ if(3 %in% y){
+  df3 &lt;&lt;- data.frame(a = 100, b = 200)
+ }
+ 
+  lapply(y,g4) %&gt;% rm()
+}
+
+g4 &lt;- function(y){
+  object_name &lt;- lookup[[&quot;value&quot;]][[y]]
+  
+  get(object_name) %&gt;%
+    unlist() %&gt;%
+    print()
+}</code></pre>
+<pre class="r"><code>f4(t1)</code></pre>
+<pre><code>## a1 a2 b1 b2 
+##  1  2  3  4 
+##   a   b 
+## 100 200</code></pre>
+<pre class="r"><code>f4(t2)</code></pre>
+<pre><code>## a1 a2 a3 a4 a5 b1 b2 b3 b4 b5 
+## 11 12 13 14 15 16 17 18 19 20 
+##   a   b 
+## 100 200</code></pre>
+<p>This works too!</p>
+</div>
+<div id="which-approach-is-better" class="section level3">
+<h3>Which approach is “better?”</h3>
+<p>I’m genuinely not sure. I’m inclined to think that creating a new environment within the function <code>f</code> is better, that way we’re not needlessly cluttering the global environment. But at the same time I’ve read to be careful with creating new environments. Maybe there isn’t a single “best” way? Or that both are sufficient if approached with equal care? I’ve been mulling over posting a question to Stack Overflow that asks for advice on the best way of cross-function environment references. If I can make a clear and succinct question I’ll do just that.</p>
+<p>For the purposes of the project that inspired the dive into this topic I’ve gone with the first approach, that creates an environment as part of the function execution.</p>
+</div>
+<div id="takeaways" class="section level3">
+<h3>Takeaways</h3>
+<ul>
+<li>Functions have their own local variables and those are not by default accessible to other functions, even functions that call said functions.</li>
+<li>Two solutions are to explicitly create a new, named environment with <code>new.env()</code> or assigning values to the global environment from within a function with <code>&lt;--</code>.</li>
+<li>I was able to solve my problem before posting to Stack Overflow by creating a reproducible example.</li>
+</ul>
+</div>
+<div id="miscellaneous" class="section level3">
+<h3>Miscellaneous</h3>
+<ul>
+<li><a href="https://stackoverflow.com/questions/2646402/using-functions-and-environments">This</a> Stack Overflow question and answer put me in the right direction for solving my problem.</li>
+<li><a href="http://courses.washington.edu/css342/zander/css332/passby.html">This</a> material has given me more to think about. It came up in the results of a Google search I did as I went about troubleshooting. I don’t follow the concepts of “Pass by value” vs. “Pass by reference” that well, but feel it is applicable to my problem here. I think a better understanding of those concepts should make me a better programmer from the perspective of best practices rather than just working.</li>
+</ul>
+</div>
+
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<script>
+window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+ga('create', 'UA-123-45', 'auto');
+ga('send', 'pageview');
+</script>
+<script async src='//www.google-analytics.com/analytics.js'></script>
+
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.11.0/highlight.min.js"></script>
+  
+
+  <script type="text/javascript">
+    hljs.initHighlightingOnLoad();
+  </script>
+
+
+
+
+
+</body>
+</html>
+

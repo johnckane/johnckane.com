@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="chrome=1">
+<meta name="HandheldFriendly" content="True">
+<meta name="MobileOptimized" content="320">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer">
+<meta name="author" content="John C. Kane">
+<meta name="description" content="import numpy as np np.random.randn(10) What I want to provide perhaps a google search result for someone who discovers they did the same thing I did and hope that they may be able to recover them.
+For most of 2017 I have worked on a project and stored the files locally, not doing version control with git. As the project matured I realized I would soon need to share the code and to make use of all git has to offer, I should connect it to a repository.">
+
+<meta property="og:title" content="Saved by Dangling Blobs" />
+<meta property="og:description" content="import numpy as np np.random.randn(10) What I want to provide perhaps a google search result for someone who discovers they did the same thing I did and hope that they may be able to recover them.
+For most of 2017 I have worked on a project and stored the files locally, not doing version control with git. As the project matured I realized I would soon need to share the code and to make use of all git has to offer, I should connect it to a repository." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="/drafts/saved-by-dangling-blobs/" />
+
+
+
+<meta property="article:published_time" content="2017-12-11T00:00:00&#43;00:00"/>
+<meta property="article:modified_time" content="2017-12-11T00:00:00&#43;00:00"/>
+
+
+
+
+
+
+
+
+
+
+
+
+<title>
+
+
+     Saved by Dangling Blobs 
+
+</title>
+<link rel="canonical" href="/drafts/saved-by-dangling-blobs/">
+
+
+
+
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.11.0/styles/default.min.css">
+
+
+
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,700|Ubuntu+Mono:400,400i,700,700i|Raleway:500">
+
+
+
+    
+    <link rel="stylesheet" href="/css/reset.css?t=2018-02-11%2019%3a38%3a52.847950314%20-0600%20CST%20m%3d%2b0.028467527">
+    <link rel="stylesheet" href="/css/pygments.css?t=2018-02-11%2019%3a38%3a52.847950314%20-0600%20CST%20m%3d%2b0.028467527">
+    <link rel="stylesheet" href="/css/main.css?t=2018-02-11%2019%3a38%3a52.847950314%20-0600%20CST%20m%3d%2b0.028467527">
+    
+        <link rel="stylesheet" href="/css/override.css?t=2018-02-11%2019%3a38%3a52.847950314%20-0600%20CST%20m%3d%2b0.028467527">
+    
+
+
+
+
+<link rel="shortcut icon"
+
+    href="/img/leaf.ico"
+
+>
+
+
+
+
+
+
+
+
+</head>
+
+
+<body lang="en">
+
+<section class="header">
+    <div class="container">
+        <div class="content">
+            
+                
+                
+                
+                
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                
+                <a href="/"><img class="avatar" src="/img/jkane-78color.jpg" srcset="/img/jkane-78color.jpg 1x"></a>
+            
+            <a href="/"><div class="name">John C. Kane</div></a>
+            
+            <nav>
+                <ul>
+                    
+                        <li class="nav-blog"><a href="/blog/"><span>Blog</span></a></li>
+                    
+                        <li class="nav-projects"><a href="/projects/"><span>Projects</span></a></li>
+                    
+                        <li class="nav-about"><a href="/about/"><span>About</span></a></li>
+                    
+                </ul>
+            </nav>
+        </div>
+    </div>
+</section>
+
+<section class="icons">
+    <div class="container">
+        <div class="content">
+
+        
+            <a href="//github.com/you" target="_blank" rel="noopener"><img class="icon" src="/img/github.svg" alt="github" /></a>
+        
+
+        
+            <a href="//twitter.com/you" target="_blank" rel="noopener"><img class="icon" src="/img/twitter.svg" alt="twitter" /></a>
+        
+
+        
+
+        
+
+        
+            <a href="//linkedin.com/in/you" target="_blank" rel="noopener"><img class="icon" src="/img/linkedin.svg" alt="linkedin" /></a>
+        
+
+        
+
+        
+            
+        
+
+        
+
+        
+            <a href="mailto:you@example.space"><img class="icon" src="/img/email.svg" alt="email" /></a>
+        
+
+        
+            <a href="/index.xml"><img class="icon" src="/img/rss.svg" alt="rss" /></a>
+        
+        
+        </div>
+    </div>
+</section>
+
+<section class="main">
+    <div class="container">
+        <div class="content">
+            <div class="page-heading">
+
+    Saved by Dangling Blobs
+
+</div>
+
+            <div class="markdown">
+                <pre class="python"><code>import numpy as np
+
+np.random.randn(10)</code></pre>
+<div id="what-i-want-to-provide" class="section level2">
+<h2>What I want to provide</h2>
+<p>perhaps a google search result for someone who discovers they did the same thing I did and hope that they may be able to recover them.</p>
+<p>For most of 2017 I have worked on a project and stored the files locally, not doing version control with git. As the project matured I realized I would soon need to share the code and to make use of all git has to offer, I should connect it to a repository. The order in which I did it mattered.</p>
+<p>Let’s illustrate with an example.</p>
+<p>Let’s say you have some files in a directory</p>
+<p>image of files via ls</p>
+<pre class="bash"><code>cd /home/john
+mkdir sample-dir
+cd sample-dir
+echo &#39;this is file1&#39; &gt; file1.txt
+echo &#39;this is file2&#39; &gt; file2.txt
+ls -l
+echo &#39; &#39;
+echo &#39;now print the contents of the files&#39;
+cat file1.txt
+cat file2.txt</code></pre>
+<pre><code>## mkdir: cannot create directory ‘sample-dir’: File exists
+## total 16
+## -rw-rw-r-- 1 john john 14 Feb 11 19:38 file1.txt
+## -rw-rw-r-- 1 john john 14 Feb 11 19:38 file2.txt
+## -rw-rw-r-- 1 john john 14 Jan 14 18:29 file3.txt
+## -rw-rw-r-- 1 john john 13 Jan 14 18:30 README.md
+##  
+## now print the contents of the files
+## this is file1
+## this is file2</code></pre>
+<p>So in this scenario we start to think that it would be nice to connect these files to a github repository.</p>
+</div>
+<div id="whats-the-lesson" class="section level2">
+<h2>What’s the lesson?</h2>
+<p>Commit, commit, commit!</p>
+<p>As stated in a Stack Overflow <a href="link">post</a> anything that is committed can be</p>
+<p>Another realization is that when it is appropriate to commit.</p>
+<p>Should you: - commit every time you edit/save a file? that seems excessive. - commit every time you make a major change? that seems to infrequent</p>
+<p>When to push commits? - tempted to push every day to see and show off that you “worked” that day</p>
+<p>These are questions that likely have “good” or at least moderately well accepted answers in software development circles. Likely data science circles as well. But this is all very new to me (which is hopefully apparent by the fact that I nearly lost six months of work by attempting to use git).</p>
+</div>
+
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<script>
+window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+ga('create', 'UA-123-45', 'auto');
+ga('send', 'pageview');
+</script>
+<script async src='//www.google-analytics.com/analytics.js'></script>
+
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.11.0/highlight.min.js"></script>
+  
+
+  <script type="text/javascript">
+    hljs.initHighlightingOnLoad();
+  </script>
+
+
+
+
+
+</body>
+</html>
+

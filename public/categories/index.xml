@@ -11,6 +11,24 @@
     
     
     <item>
+      <title>Environments</title>
+      <link>/categories/environments/</link>
+      <pubDate>Fri, 02 Feb 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/categories/environments/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Functions</title>
+      <link>/categories/functions/</link>
+      <pubDate>Fri, 02 Feb 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/categories/functions/</guid>
+      <description></description>
+    </item>
+    
+    <item>
       <title>Git</title>
       <link>/categories/git/</link>
       <pubDate>Mon, 11 Dec 2017 00:00:00 +0000</pubDate>
@@ -20,11 +38,29 @@
     </item>
     
     <item>
+      <title>Python</title>
+      <link>/categories/python/</link>
+      <pubDate>Mon, 11 Dec 2017 00:00:00 +0000</pubDate>
+      
+      <guid>/categories/python/</guid>
+      <description></description>
+    </item>
+    
+    <item>
       <title>R</title>
       <link>/categories/r/</link>
-      <pubDate>Thu, 23 Jul 2015 21:13:14 -0500</pubDate>
+      <pubDate>Fri, 02 Feb 2018 00:00:00 +0000</pubDate>
       
       <guid>/categories/r/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Tensorflow</title>
+      <link>/categories/tensorflow/</link>
+      <pubDate>Mon, 11 Dec 2017 00:00:00 +0000</pubDate>
+      
+      <guid>/categories/tensorflow/</guid>
       <description></description>
     </item>
     

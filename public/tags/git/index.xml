@@ -13,11 +13,12 @@
     
     <item>
       <title>Saved by Dangling Blobs</title>
-      <link>/post/saved-by-dangling-blobs/</link>
+      <link>/drafts/saved-by-dangling-blobs/</link>
       <pubDate>Mon, 11 Dec 2017 00:00:00 +0000</pubDate>
       
-      <guid>/post/saved-by-dangling-blobs/</guid>
-      <description></description>
+      <guid>/drafts/saved-by-dangling-blobs/</guid>
+      <description>import numpy as np np.random.randn(10) What I want to provide perhaps a google search result for someone who discovers they did the same thing I did and hope that they may be able to recover them.
+For most of 2017 I have worked on a project and stored the files locally, not doing version control with git. As the project matured I realized I would soon need to share the code and to make use of all git has to offer, I should connect it to a repository.</description>
     </item>
     
   </channel>

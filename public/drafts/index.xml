@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Drafts on John Kane</title>
+    <link>/drafts/</link>
+    <description>Recent content in Drafts on John Kane</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-US</language>
+    <lastBuildDate>Mon, 11 Dec 2017 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="/drafts/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Saved by Dangling Blobs</title>
+      <link>/drafts/saved-by-dangling-blobs/</link>
+      <pubDate>Mon, 11 Dec 2017 00:00:00 +0000</pubDate>
+      
+      <guid>/drafts/saved-by-dangling-blobs/</guid>
+      <description>import numpy as np np.random.randn(10) What I want to provide perhaps a google search result for someone who discovers they did the same thing I did and hope that they may be able to recover them.
+For most of 2017 I have worked on a project and stored the files locally, not doing version control with git. As the project matured I realized I would soon need to share the code and to make use of all git has to offer, I should connect it to a repository.</description>
+    </item>
+    
+    <item>
+      <title>Simple Linear Regression With Tensorflow</title>
+      <link>/drafts/simple-linear-regression-with-tensorflow/</link>
+      <pubDate>Mon, 11 Dec 2017 00:00:00 +0000</pubDate>
+      
+      <guid>/drafts/simple-linear-regression-with-tensorflow/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>/drafts/2018-02-02-environments-and-functions/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/drafts/2018-02-02-environments-and-functions/</guid>
+      <description>R Functions and Environments       code{white-space: pre;} pre:not([class]) { background-color: white; }  if (window.hljs) { hljs.configure({languages: []}); hljs.initHighlightingOnLoad(); if (document.readyState &amp;&amp; document.readyState === &#34;complete&#34;) { window.setTimeout(function() { hljs.initHighlighting(); }, 0); } }  h1 { font-size: 34px; } h1.title { font-size: 38px; } h2 { font-size: 30px; } h3 { font-size: 24px; } h4 { font-size: 18px; } h5 { font-size: 16px; } h6 { font-size: 12px; } .</description>
+    </item>
+    
+  </channel>
+</rss>

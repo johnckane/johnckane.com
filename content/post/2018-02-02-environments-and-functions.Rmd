@@ -1,0 +1,211 @@
+---
+title: R Functions and Environments
+author: John Kane
+date: '2018-02-02'
+slug: functions-and-environments
+categories:
+  - R
+  - functions
+  - environments
+tags: [R, functions, environments]
+---
+
+The content of this post nearly became a Stack Overflow question. In the process of going about making a [reproducible example](https://stackoverflow.com/questions/5963269/how-to-make-a-great-r-reproducible-example) I solved the problem, as often happens. It took a bit of time to stich together several other SO posts before I arrived at it. Hopefully when someone else comes across the issue maybe this will provide some immediate assistance. 
+
+The following is the reprex I went about writing to include in the Stack Overflow post. Suspend your judgment of what this code actually accomplishes to focus on the issues of functions and environments. 
+
+In the global environment I have the following list, which I call `lookup`. The purpose of this list is to be able to lookup a `value` based solely on a numeric value. 
+
+```{r, message=FALSE}
+library(dplyr)
+lookup <- list(code = c(1,2,3),
+                value = c('df1','df2','df3'))
+```
+
+To illustrate what's going I'll use two "function familes," for lack of a better word, `f` and `g`. Throughout this post I'll refer to different variants of the `f` and `g` functions by using `f1`,`g1`,`f2`,`g2`, etc.
+
+* The `f` functions conditionally create dataframes. They takes as its lone argument a vector of integers.
+* The `g` functions process each dataframe created in `f` in a similar way, by unlisting and printing it. The `g` functions are called from the `f` functions through an `lapply` call. 
+
+
+```{r}
+f1 <- function(x){
+  
+  if(1 %in% x){
+    df1 <- data.frame(a = 1:2, b=3:4)
+  }
+   
+  if(2 %in% x){
+    df2 <- data.frame(a = 11:15, b= 16:20)
+  } 
+ 
+  if(3 %in% x){
+    df3 <- data.frame(a = 100, b = 200)
+  }
+  
+  lapply(x,g1) %>% rm() # lapply returns a list, in this case it would be a NULL list so pass that to rm(). 
+}  
+
+g1 <- function(y){
+  
+  object_name <- lookup[["value"]][[y]]
+  
+  get(object_name) %>%
+    unlist() %>%
+    print()
+}
+```
+
+
+### Initial testing
+
+Since we're calling `g` from within `f` we want to make sure that `g` works outside of `f`. That way if `f` fails then we wouldn't think that it was because of `g`.
+
+When we create `df1` in the global environment and want to unlist and print it, we can call `g1(1)` and it works like we'd expect.
+
+```{r}
+df1 <- data.frame(a = 1:2, b=3:4)
+g1(1)
+```
+
+However when we attempt to conditionally create `df1` and pass it to `g1` (that is call `f1(1)`) it fails:
+
+```{r, include = FALSE}
+# first remove `df1` which was created in the global environment
+rm(df1)
+```
+
+```{r, error = TRUE}
+f1(1)
+```
+
+### Why didn't that work?
+
+The best way I can think to describe it is that the function `g` doesn't have any of the objects `df1`, `df2`, or `df3` in the local environment created on execution. So it goes and looks for them in `.GlobalEnv` where they are shielded by the environment of `f`. So it appears that `g` can't cross into `f`'s environment to use things created there.
+
+This is my attempt at illustrating the R environment I created:
+
+![](/home/john/johnckane.com/static/img/environment1.png)
+
+So a solution would be to tell `g` to explicitly look in `f`'s environment. What is the name of the environment created when `f` is executed? Consider the function `f2` which prints the name of the environment that dataframe `df1` is created in.
+
+```{r}
+f2<- function(x){
+  df1 <- data.frame(a = 1:2, b=3:4)
+  print(environment(df1))
+}  
+f2(1)
+```
+
+The `NULL` environment? I'm genuinely not sure what to make of that. So if we can't tell g what the environment of `f` is that the dataframes are created in, what can we do?
+
+### Explicitly create a new, named environment 
+
+Consider this function `f3`. This creates an new environment with the call to `new.env()` then assigns any dataframes created by the function to that environment. For the sake of consistency call the `g` function called by `f3` `g3`, I'm skipping `g2`. `g3` takes an additional argument beyond the vector of integers, an environment to look in.  
+
+```{r}
+f3 <- function(y){
+  
+ e <- new.env()
+ 
+ if(1 %in% y){
+   e$df1 <- data.frame(a = 1:2, b=3:4)
+  }
+
+ if(2 %in% y){
+  e$df2 <- data.frame(a = 11:15, b= 16:20)
+  }
+
+ if(3 %in% y){
+  e$df3 <- data.frame(a = 100, b = 200)
+ }
+
+ lapply(y,g3,look_in = e) %>% rm()
+
+}
+
+g3 <- function(y,look_in){
+  
+  object_name <- lookup[["value"]][[y]]
+  
+  get(object_name, envir = look_in) %>%
+    unlist() %>%
+    print()
+}
+
+```
+
+Test on some new data:
+
+```{r}
+t1 <- c(1,3)
+t2 <- c(2,3)
+f3(t1)
+f3(t2)
+```
+
+Now it works!
+
+Note that the environment created within `f3` does not persist after the function executes:
+
+```{r, error = TRUE}
+ls(envir = e)
+```
+
+
+### Alternatively, assign to global environment with `<<-`
+
+An alternate solution would be to assign the dataframes to the global environment directly. We'll do so with functions `f4` and `g4`. 
+
+```{r}
+f4 <- function(y){
+  
+  if(1 %in% y){
+   df1 <<- data.frame(a = 1:2, b=3:4)
+  }
+
+ if(2 %in% y){
+  df2 <<- data.frame(a = 11:15, b= 16:20)
+  }
+
+ if(3 %in% y){
+  df3 <<- data.frame(a = 100, b = 200)
+ }
+ 
+  lapply(y,g4) %>% rm()
+}
+
+g4 <- function(y){
+  object_name <- lookup[["value"]][[y]]
+  
+  get(object_name) %>%
+    unlist() %>%
+    print()
+}
+```
+
+
+
+```{r}
+f4(t1)
+f4(t2)
+```
+
+This works too!
+
+### Which approach is "better?"
+
+I'm genuinely not sure. I'm inclined to think that creating a new environment within the function `f` is better, that way we're not needlessly cluttering the global environment. But at the same time I've read to be careful with creating new environments. Maybe there isn't a single "best" way? Or that both are sufficient if approached with equal care? I've been mulling over posting a question to Stack Overflow that asks for advice on the best way of cross-function environment references. If I can make a clear and succinct question I'll do just that.
+
+For the purposes of the project that inspired the dive into this topic I've gone with the first approach, that creates an environment as part of the function execution.
+
+### Takeaways
+
+* Functions have their own local variables and those are not by default accessible to other functions, even functions that call said functions.
+* Two solutions are to explicitly create a new, named environment with `new.env()` or assigning values to the global environment from within a function with `<--`. 
+* I was able to solve my problem before posting to Stack Overflow by creating a reproducible example.
+
+### Miscellaneous
+
+* [This](https://stackoverflow.com/questions/2646402/using-functions-and-environments) Stack Overflow question and answer put me in the right direction for solving my problem.
+* [This](http://courses.washington.edu/css342/zander/css332/passby.html) material has given me more to think about. It came up in the results of a Google search I did as I went about troubleshooting. I don't follow the concepts of "Pass by value" vs. "Pass by reference" that well, but feel it is applicable to my problem here. I think a better understanding of those concepts should make me a better programmer from the perspective of best practices rather than just working. 

@@ -1,0 +1,56 @@
+---
+title: Saved by Dangling Blobs
+author: John Kane
+date: '2017-12-11'
+slug: saved-by-dangling-blobs
+categories:
+  - git
+  - version-control
+tags:
+  - git
+  - version-control
+---
+
+
+
+<pre class="python"><code>import numpy as np
+
+np.random.randn(10)</code></pre>
+<div id="what-i-want-to-provide" class="section level2">
+<h2>What I want to provide</h2>
+<p>perhaps a google search result for someone who discovers they did the same thing I did and hope that they may be able to recover them.</p>
+<p>For most of 2017 I have worked on a project and stored the files locally, not doing version control with git. As the project matured I realized I would soon need to share the code and to make use of all git has to offer, I should connect it to a repository. The order in which I did it mattered.</p>
+<p>Let’s illustrate with an example.</p>
+<p>Let’s say you have some files in a directory</p>
+<p>image of files via ls</p>
+<pre class="bash"><code>cd /home/john
+mkdir sample-dir
+cd sample-dir
+echo &#39;this is file1&#39; &gt; file1.txt
+echo &#39;this is file2&#39; &gt; file2.txt
+ls -l
+echo &#39; &#39;
+echo &#39;now print the contents of the files&#39;
+cat file1.txt
+cat file2.txt</code></pre>
+<pre><code>## mkdir: cannot create directory ‘sample-dir’: File exists
+## total 16
+## -rw-rw-r-- 1 john john 14 Feb 11 19:38 file1.txt
+## -rw-rw-r-- 1 john john 14 Feb 11 19:38 file2.txt
+## -rw-rw-r-- 1 john john 14 Jan 14 18:29 file3.txt
+## -rw-rw-r-- 1 john john 13 Jan 14 18:30 README.md
+##  
+## now print the contents of the files
+## this is file1
+## this is file2</code></pre>
+<p>So in this scenario we start to think that it would be nice to connect these files to a github repository.</p>
+</div>
+<div id="whats-the-lesson" class="section level2">
+<h2>What’s the lesson?</h2>
+<p>Commit, commit, commit!</p>
+<p>As stated in a Stack Overflow <a href="link">post</a> anything that is committed can be</p>
+<p>Another realization is that when it is appropriate to commit.</p>
+<p>Should you: - commit every time you edit/save a file? that seems excessive. - commit every time you make a major change? that seems to infrequent</p>
+<p>When to push commits? - tempted to push every day to see and show off that you “worked” that day</p>
+<p>These are questions that likely have “good” or at least moderately well accepted answers in software development circles. Likely data science circles as well. But this is all very new to me (which is hopefully apparent by the fact that I nearly lost six months of work by attempting to use git).</p>
+</div>
