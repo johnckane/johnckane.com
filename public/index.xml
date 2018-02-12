@@ -22,17 +22,6 @@ The following is the reprex I went about writing to include in the Stack Overflo
     </item>
     
     <item>
-      <title>colophon</title>
-      <link>/about/colophon/</link>
-      <pubDate>Sat, 22 Aug 2015 06:28:26 -0700</pubDate>
-      
-      <guid>/about/colophon/</guid>
-      <description>This website is a personal homepage.
-The site is built with Hugo—a static site generator made with Go. The website source code is available on GitHub. It uses the cocoa theme. The posts are written in Markdown.
-The primary font face is Open Sans and the monospace font face is Ubuntu Mono. The social icons are from the Ionicons font set. CSS classes for code syntax highlighting are inserted during compile-time by Hugo using Pygments.</description>
-    </item>
-    
-    <item>
       <title>Snake Draft Assistant</title>
       <link>/projects/snake-assistant/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>

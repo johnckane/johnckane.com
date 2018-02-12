@@ -5,4 +5,4 @@ title = "About"
 
 +++
 
-[About this site](colophon/)
+# [About this site](/)
