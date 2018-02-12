@@ -6,17 +6,17 @@
     <description>Recent content in Functions on John Kane</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-US</language>
-    <lastBuildDate>Fri, 02 Feb 2018 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 11 Feb 2018 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/categories/functions/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>R Functions and Environments</title>
-      <link>/post/functions-and-environments/</link>
-      <pubDate>Fri, 02 Feb 2018 00:00:00 +0000</pubDate>
+      <link>/blog/functions-and-environments/</link>
+      <pubDate>Sun, 11 Feb 2018 00:00:00 +0000</pubDate>
       
-      <guid>/post/functions-and-environments/</guid>
+      <guid>/blog/functions-and-environments/</guid>
       <description>The content of this post nearly became a Stack Overflow question. In the process of going about making a reproducible example I solved the problem, as often happens. It took a bit of time to stich together several other SO posts before I arrived at it. Hopefully when someone else comes across the issue maybe this will provide some immediate assistance.
 The following is the reprex I went about writing to include in the Stack Overflow post.</description>
     </item>

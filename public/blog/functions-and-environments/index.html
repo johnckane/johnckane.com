@@ -1,18 +1,193 @@
----
-title: R Functions and Environments
-author: John Kane
-date: '2018-02-02'
-slug: functions-and-environments
-categories:
-  - R
-  - functions
-  - environments
-tags: [R, functions, environments]
----
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="chrome=1">
+<meta name="HandheldFriendly" content="True">
+<meta name="MobileOptimized" content="320">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer">
+<meta name="author" content="John C. Kane">
+<meta name="description" content="The content of this post nearly became a Stack Overflow question. In the process of going about making a reproducible example I solved the problem, as often happens. It took a bit of time to stich together several other SO posts before I arrived at it. Hopefully when someone else comes across the issue maybe this will provide some immediate assistance.
+The following is the reprex I went about writing to include in the Stack Overflow post.">
+
+<meta property="og:title" content="R Functions and Environments" />
+<meta property="og:description" content="The content of this post nearly became a Stack Overflow question. In the process of going about making a reproducible example I solved the problem, as often happens. It took a bit of time to stich together several other SO posts before I arrived at it. Hopefully when someone else comes across the issue maybe this will provide some immediate assistance.
+The following is the reprex I went about writing to include in the Stack Overflow post." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="/blog/functions-and-environments/" />
 
 
 
-<p>The content of this post nearly became a Stack Overflow question. In the process of going about making a <a href="https://stackoverflow.com/questions/5963269/how-to-make-a-great-r-reproducible-example">reproducible example</a> I solved the problem, as often happens. It took a bit of time to stich together several other SO posts before I arrived at it. Hopefully when someone else comes across the issue maybe this will provide some immediate assistance.</p>
+<meta property="article:published_time" content="2018-02-11T00:00:00&#43;00:00"/>
+<meta property="article:modified_time" content="2018-02-11T00:00:00&#43;00:00"/>
+
+
+
+
+
+
+
+
+
+
+
+
+<title>
+
+
+     R Functions and Environments 
+
+</title>
+<link rel="canonical" href="/blog/functions-and-environments/">
+
+
+
+
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.11.0/styles/default.min.css">
+
+
+
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,700|Ubuntu+Mono:400,400i,700,700i|Raleway:500">
+
+
+
+    
+    <link rel="stylesheet" href="/css/reset.css?t=2018-02-11%2019%3a51%3a55.440694855%20-0600%20CST%20m%3d%2b0.017373548">
+    <link rel="stylesheet" href="/css/pygments.css?t=2018-02-11%2019%3a51%3a55.440694855%20-0600%20CST%20m%3d%2b0.017373548">
+    <link rel="stylesheet" href="/css/main.css?t=2018-02-11%2019%3a51%3a55.440694855%20-0600%20CST%20m%3d%2b0.017373548">
+    
+        <link rel="stylesheet" href="/css/override.css?t=2018-02-11%2019%3a51%3a55.440694855%20-0600%20CST%20m%3d%2b0.017373548">
+    
+
+
+
+
+<link rel="shortcut icon"
+
+    href="/img/leaf.ico"
+
+>
+
+
+
+
+
+
+
+
+</head>
+
+
+<body lang="en">
+
+<section class="header">
+    <div class="container">
+        <div class="content">
+            
+                
+                
+                
+                
+                
+                    
+                
+                    
+                
+                    
+                
+                    
+                
+                
+                <a href="/"><img class="avatar" src="/img/jkane-78color.jpg" srcset="/img/jkane-78color.jpg 1x"></a>
+            
+            <a href="/"><div class="name">John C. Kane</div></a>
+            
+            <nav>
+                <ul>
+                    
+                        <li class="nav-blog"><a href="/blog/"><span>Blog</span></a></li>
+                    
+                        <li class="nav-projects"><a href="/projects/"><span>Projects</span></a></li>
+                    
+                        <li class="nav-about"><a href="/about/"><span>About</span></a></li>
+                    
+                </ul>
+            </nav>
+        </div>
+    </div>
+</section>
+
+<section class="icons">
+    <div class="container">
+        <div class="content">
+
+        
+            <a href="//github.com/you" target="_blank" rel="noopener"><img class="icon" src="/img/github.svg" alt="github" /></a>
+        
+
+        
+            <a href="//twitter.com/you" target="_blank" rel="noopener"><img class="icon" src="/img/twitter.svg" alt="twitter" /></a>
+        
+
+        
+
+        
+
+        
+            <a href="//linkedin.com/in/you" target="_blank" rel="noopener"><img class="icon" src="/img/linkedin.svg" alt="linkedin" /></a>
+        
+
+        
+
+        
+            
+        
+
+        
+
+        
+            <a href="mailto:you@example.space"><img class="icon" src="/img/email.svg" alt="email" /></a>
+        
+
+        
+            <a href="/index.xml"><img class="icon" src="/img/rss.svg" alt="rss" /></a>
+        
+        
+        </div>
+    </div>
+</section>
+
+
+<section class="main post non-narrow zero-top-spacing">
+    <div class="container">
+        <div class="content">
+            <div class="front-matter">
+                <div class="title-container">
+                    <div class="page-heading">
+
+    R Functions and Environments
+
+</div>
+
+                    <div class="initials"><a href="/">ad</a></div>
+                </div>
+                <div class="meta">
+                    
+                    <div class="date" title='Sun Feb 11 2018 00:00:00 UTC'>Feb 11, 2018</div>
+                    
+                    
+		    <div class="reading-time"><div class="middot"></div>6 minutes read</div>
+                    
+                </div>
+            </div>
+            <div class="markdown">
+                <p>The content of this post nearly became a Stack Overflow question. In the process of going about making a <a href="https://stackoverflow.com/questions/5963269/how-to-make-a-great-r-reproducible-example">reproducible example</a> I solved the problem, as often happens. It took a bit of time to stich together several other SO posts before I arrived at it. Hopefully when someone else comes across the issue maybe this will provide some immediate assistance.</p>
 <p>The following is the reprex I went about writing to include in the Stack Overflow post. Suspend your judgment of what this code actually accomplishes to focus on the issues of functions and environments.</p>
 <p>In the global environment I have the following list, which I call <code>lookup</code>. The purpose of this list is to be able to lookup a <code>value</code> based solely on a numeric value.</p>
 <pre class="r"><code>library(dplyr)
@@ -185,3 +360,60 @@ g4 &lt;- function(y){
 <li><a href="http://courses.washington.edu/css342/zander/css332/passby.html">This</a> material has given me more to think about. It came up in the results of a Google search I did as I went about troubleshooting. I don’t follow the concepts of “Pass by value” vs. “Pass by reference” that well, but feel it is applicable to my problem here. I think a better understanding of those concepts should make me a better programmer from the perspective of best practices rather than just working.</li>
 </ul>
 </div>
+
+                <br>
+		<p class="back-to-posts"><a href="/blog/">Back to posts</a></p>
+            </div>
+            <br>
+            <div class="disqus">
+                <div id="disqus_thread"></div>
+<script>
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "cocoaexamplesite" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+            </div>
+            
+        </div>
+    </div>
+</section>
+
+
+
+<script>
+window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+ga('create', 'UA-123-45', 'auto');
+ga('send', 'pageview');
+</script>
+<script async src='//www.google-analytics.com/analytics.js'></script>
+
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.11.0/highlight.min.js"></script>
+  
+
+  <script type="text/javascript">
+    hljs.initHighlightingOnLoad();
+  </script>
+
+
+
+
+
+</body>
+</html>
+

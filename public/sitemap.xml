@@ -3,33 +3,8 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
-    <loc>/post/functions-and-environments/</loc>
-    <lastmod>2018-02-02T00:00:00+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>/drafts/saved-by-dangling-blobs/</loc>
-    <lastmod>2017-12-11T00:00:00+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>/drafts/simple-linear-regression-with-tensorflow/</loc>
-    <lastmod>2017-12-11T00:00:00+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>/blog/les-mis%C3%A9rables-by-victor-hugo/</loc>
-    <lastmod>2015-12-21T04:05:25-06:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>/blog/metamorphosis-by-franz-kafka/</loc>
-    <lastmod>2015-12-21T04:03:46-06:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>/blog/use-at-instead-of-head/</loc>
-    <lastmod>2015-08-25T17:09:14-05:00</lastmod>
+    <loc>/blog/functions-and-environments/</loc>
+    <lastmod>2018-02-11T00:00:00+00:00</lastmod>
   </url>
   
   <url>
@@ -53,142 +28,55 @@
   </url>
   
   <url>
-    <loc>/blog/hello-r-markdown/</loc>
-    <lastmod>2015-07-23T21:13:14-05:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>/drafts/2018-02-02-environments-and-functions/</loc>
-  </url>
-  
-  <url>
     <loc>/categories/</loc>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>/drafts/</loc>
-    <lastmod>2017-12-11T00:00:00+00:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
     <loc>/tags/environments/</loc>
-    <lastmod>2018-02-02T00:00:00+00:00</lastmod>
+    <lastmod>2018-02-11T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>/categories/environments/</loc>
-    <lastmod>2018-02-02T00:00:00+00:00</lastmod>
+    <lastmod>2018-02-11T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>/tags/functions/</loc>
-    <lastmod>2018-02-02T00:00:00+00:00</lastmod>
+    <lastmod>2018-02-11T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>/categories/functions/</loc>
-    <lastmod>2018-02-02T00:00:00+00:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>/tags/git/</loc>
-    <lastmod>2017-12-11T00:00:00+00:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>/categories/git/</loc>
-    <lastmod>2017-12-11T00:00:00+00:00</lastmod>
+    <lastmod>2018-02-11T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>/</loc>
-    <lastmod>2018-02-02T00:00:00+00:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>/tags/plot/</loc>
-    <lastmod>2015-07-23T21:13:14-05:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>/post/</loc>
-    <lastmod>2018-02-02T00:00:00+00:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>/tags/python/</loc>
-    <lastmod>2017-12-11T00:00:00+00:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>/categories/python/</loc>
-    <lastmod>2017-12-11T00:00:00+00:00</lastmod>
+    <lastmod>2018-02-11T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>/tags/r/</loc>
-    <lastmod>2018-02-02T00:00:00+00:00</lastmod>
+    <lastmod>2018-02-11T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>/categories/r/</loc>
-    <lastmod>2018-02-02T00:00:00+00:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>/tags/r-markdown/</loc>
-    <lastmod>2015-07-23T21:13:14-05:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>/tags/regression/</loc>
-    <lastmod>2015-07-23T21:13:14-05:00</lastmod>
+    <lastmod>2018-02-11T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>/tags/</loc>
-    <lastmod>2018-02-02T00:00:00+00:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>/tags/tensorflow/</loc>
-    <lastmod>2017-12-11T00:00:00+00:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>/categories/tensorflow/</loc>
-    <lastmod>2017-12-11T00:00:00+00:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>/tags/version-control/</loc>
-    <lastmod>2017-12-11T00:00:00+00:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>/categories/version-control/</loc>
-    <lastmod>2017-12-11T00:00:00+00:00</lastmod>
+    <lastmod>2018-02-11T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   

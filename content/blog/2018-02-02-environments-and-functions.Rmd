@@ -1,7 +1,7 @@
 ---
 title: R Functions and Environments
 author: John Kane
-date: '2018-02-02'
+date: '2018-02-11'
 slug: functions-and-environments
 categories:
   - R

@@ -6,7 +6,7 @@
     <description>Recent content in Tags on John Kane</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-US</language>
-    <lastBuildDate>Fri, 02 Feb 2018 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 11 Feb 2018 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/tags/index.xml" rel="self" type="application/rss+xml" />
     
@@ -14,7 +14,7 @@
     <item>
       <title>Environments</title>
       <link>/tags/environments/</link>
-      <pubDate>Fri, 02 Feb 2018 00:00:00 +0000</pubDate>
+      <pubDate>Sun, 11 Feb 2018 00:00:00 +0000</pubDate>
       
       <guid>/tags/environments/</guid>
       <description></description>
@@ -23,81 +23,18 @@
     <item>
       <title>Functions</title>
       <link>/tags/functions/</link>
-      <pubDate>Fri, 02 Feb 2018 00:00:00 +0000</pubDate>
+      <pubDate>Sun, 11 Feb 2018 00:00:00 +0000</pubDate>
       
       <guid>/tags/functions/</guid>
       <description></description>
     </item>
     
     <item>
-      <title>Git</title>
-      <link>/tags/git/</link>
-      <pubDate>Mon, 11 Dec 2017 00:00:00 +0000</pubDate>
-      
-      <guid>/tags/git/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Plot</title>
-      <link>/tags/plot/</link>
-      <pubDate>Thu, 23 Jul 2015 21:13:14 -0500</pubDate>
-      
-      <guid>/tags/plot/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Python</title>
-      <link>/tags/python/</link>
-      <pubDate>Mon, 11 Dec 2017 00:00:00 +0000</pubDate>
-      
-      <guid>/tags/python/</guid>
-      <description></description>
-    </item>
-    
-    <item>
       <title>R</title>
       <link>/tags/r/</link>
-      <pubDate>Fri, 02 Feb 2018 00:00:00 +0000</pubDate>
+      <pubDate>Sun, 11 Feb 2018 00:00:00 +0000</pubDate>
       
       <guid>/tags/r/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>R Markdown</title>
-      <link>/tags/r-markdown/</link>
-      <pubDate>Thu, 23 Jul 2015 21:13:14 -0500</pubDate>
-      
-      <guid>/tags/r-markdown/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Regression</title>
-      <link>/tags/regression/</link>
-      <pubDate>Thu, 23 Jul 2015 21:13:14 -0500</pubDate>
-      
-      <guid>/tags/regression/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Tensorflow</title>
-      <link>/tags/tensorflow/</link>
-      <pubDate>Mon, 11 Dec 2017 00:00:00 +0000</pubDate>
-      
-      <guid>/tags/tensorflow/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>Version Control</title>
-      <link>/tags/version-control/</link>
-      <pubDate>Mon, 11 Dec 2017 00:00:00 +0000</pubDate>
-      
-      <guid>/tags/version-control/</guid>
       <description></description>
     </item>
     
