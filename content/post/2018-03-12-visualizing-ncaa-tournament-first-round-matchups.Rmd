@@ -1,0 +1,321 @@
+---
+title: NCAA Men's Tournament First Round Upsets
+author: John Kane
+date: '2018-03-18'
+slug: ncaa-first-round-upsets
+categories:
+  - R
+  - basketball
+  - March Madness
+tags:
+  - R
+  - basketball
+  - March Madness
+---
+
+Unless you follow mid-major conferences closely, when it comes time to picking first round upsets in the NCAA Tournament you're likely either picking teams at random, or going off the analysis of the "experts" on TV, the internet, or podcasts. I won't address those who pick their upsets and Cinderella teams at random here, instead this post is about those who combine whatever they know about the field in a given year with what they see, read, and hear in the media. If you consume a lot this media you may be tempted to pick a lot of upsets, however by definition they should be rare.
+
+Although it is noisy, the NCAA Tournament Selection Committee provides some guidance to team strength by seeding each team 1-16. Thanks to a dataset from a [Kaggle competition](https://www.kaggle.com/c/march-machine-learning-mania-2017/data) that provides tournament results from 1985-2016, I've put together an analysis that aims to offer guidance on how many upsets you could expect in the first round, and from which matchups they come from. I define an upset to be anytime a numerically higher seeds beats a numerically lower seed (e.g. a 10 seed beats a 7 seed)
+
+### Data Prep
+
+```{r, include = FALSE}
+data_path <- "/home/john/basketball/march_madness/2018/data/"
+```
+
+
+#### Load Libraries and Data
+```{r, warning = FALSE, message = FALSE}
+library(tidyverse)
+library(magrittr)
+library(knitr)
+results <- read_csv(file = paste0(data_path,"TourneyCompactResults.csv"))
+seeds <- read_csv(file = paste0(data_path,"TourneySeeds.csv"))
+slots <- read_csv(file = paste0(data_path,"TourneySlots.csv"))
+seasons <- read_csv(file = paste0(data_path,"Seasons.csv"))
+colnames(results) <- tolower(colnames(results))
+colnames(seeds) <- tolower(colnames(seeds))
+colnames(slots) <- tolower(colnames(slots))
+colnames(seasons) <- tolower(colnames(seasons))
+```
+
+#### Light data cleaning
+```{r}
+# convert colnames to lowercase
+colnames(results) <- tolower(colnames(results))
+colnames(seeds) <- tolower(colnames(seeds))
+colnames(slots) <- tolower(colnames(slots))
+colnames(seasons) <- tolower(colnames(seasons))
+
+# parse the seed variable to get the region and numeric seed
+seeds %<>%
+  mutate(region = str_sub(seed,1,1),
+         seed = as.numeric(str_sub(seed,2,3)))
+```
+
+#### Restructure the data
+```{r}
+results2 <-
+  results %>%
+  select(-daynum,-wscore,-lscore,-numot) %>%                                  # drop uneeded variables
+  inner_join(.,                                                               # append winning team seeds and regions
+             seeds %>% rename(wseed = seed,wregion = region), 
+             by = c("season","wteam" = "team")) %>%
+  inner_join(.,                                                               # append losing team seeds and regions
+             seeds %>% rename(lseed = seed,lregion = region),
+             by = c("season","lteam" = "team")) %>%
+  mutate(matchup = paste0(pmin(wseed,lseed),"-",pmax(wseed,lseed)),           # create new variables indicating the matchup 
+         upset =  ifelse(wseed > lseed, 1,ifelse(wseed == lseed, 0.5,0))) %>% # and if it was an upset
+  select(season,matchup,upset,wregion,lregion)
+
+head(results2)
+```
+
+### Data Visualization
+
+#### Number of upsets each year, by matchup
+
+The first question I'm exploring in a data visualization is the number of upsets each season by matchup. There are 32 seasons worth of data in the results, so each chart will represent 32 seasons. 
+
+
+##### Aggreate number of matchups by season
+```{r}
+by_season <- results2 %>%
+  filter(matchup %in% c('1-16','2-15','3-14','4-13','5-12','6-11','7-10','8-9'), wregion==lregion) %>%
+  group_by(season,matchup) %>%
+  summarize(upsets = sum(upset))
+```
+
+```{r}
+ggplot(data = by_season,
+       aes(x = upsets)) +
+  facet_wrap(~matchup,ncol = 4) +
+  geom_bar(fill = "orange") +
+  scale_x_continuous("Upsets") +
+  scale_y_continuous("Count") +
+  ggtitle("Number of Upsets Each Year By Matchup",sub = "NCAA Men's Tournament, 1985-2016") +
+    theme_minimal()
+
+```
+
+Some oberservations from this chart:
+* The number of upsets increases as you move from the 1-16 to the 8-9 games. 
+* The tournament committee seems to do a good job; there are fewer upsets of the stronger teams and the more evenly matched teams are the more likely there is to be an upset. 
+* The most likely outcome every year is for there to be 0 upsets of 1 and 2 seeds, with at least one upset of each of teams seeded 3-7, with a tie of either 1 or 2 upsets of an 8 seed by a 9 seed.
+* There is more scatter in the number of upsets as you move from the 1-16 to the 8-9 games.
+
+
+#### Trend in upsets over time, by matchup 
+
+The second question I want to address is whether there is any sort of trend in the number of upsets. Though not the topic of this post, it is of interest and could lead to good follow-up analysis. I've added a smooth line interpolation of each of the datapoints. 
+
+```{r}
+ggplot(data = by_season,
+       aes(x = season, y = upsets)) +
+  facet_wrap(~matchup,ncol = 4) +
+  geom_line(colour = "orange") +
+  geom_smooth(method = 'loess') +
+  scale_x_continuous("Season") +
+  scale_y_continuous("Upsets") +
+  ggtitle("Number of Upsets By Season and Matchup",sub = "NCAA Men's Tournament, 1985-2016") +
+    theme_minimal()
+
+```
+
+Some observations from this chart:
+* In the last few years there may be a trend for an increased likelihood of upsets in the 2-15 and 3-14 games.
+* A trend for an upset in 6-11 games appears to have begun back around the year 2000.
+* A trend for upsets in 5-12 games appears to have been a slow, ongoing phenomenon since the tournament began. 
+* The line chart indicates that the closer two seeds are to each other, the nosier the outcome .
+* No glaring indication that upsets are any more likely in recent years than in the more distant past
+ 
+
+### Single game upset probability
+
+What is the chance of an upset in any one game? We can use the data to determine an empirical upset probability. 
+
+```{r}
+upset_prob <- 
+results2 %>%
+  filter(matchup %in% c('1-16','2-15','3-14','4-13','5-12','6-11','7-10','8-9'), wregion==lregion) %>%
+  group_by(matchup) %>%
+  summarise(upset_prob = sum(upset)/n())
+```
+
+```{r}
+kable(upset_prob)
+```
+
+One way to use this information to pick your bracket would be for each game roll a weighted die through the `sample()` function in R to determine if there was an upset or not. 
+
+For example, to pick the winner of a 7-10 game, you would use:
+
+```{r}
+set.seed(123)
+p <- 0.39
+sample(c(1,0),1,prob = c(p,1-p))
+```
+
+Indicating you would not choose an upset for this game.
+
+### Number of upsets in a given tournment
+
+A second way to use the empirical upset probabilities would be to allow yourself a little discretion with who you choose to be upset. In the previous example you are the mercy of the die in each instance. You may end up picking a 3-14 upset, but not the one that seems most likely based on other datapoints (e.g. your own analysis, media takes) you receive. 
+
+So instead what you can do is roll the die for all four matchups in a given tournament and then, if there are any upsets, you can choose which ones to fill in your bracket.
+
+For example, you can pick the number of upsets in the four 7-10 matchups this way:
+
+```{r}
+set.seed(123)
+p <- 0.39
+sample(c(1,0),4,prob = c(p,1-p), replace = TRUE)
+```
+
+So in this case you would select, based on additional analysis, two ten seeds to win. 
+
+#### Still random
+
+A valid critique of this approach is that you are still leaving a lot of things to chance, in the above example two upsets were selected, but the most likely outcome is actually for only one upset, albeit only slightly. 
+
+```{r}
+c(dbinom(1,4,0.39),dbinom(2,4,0.39))
+```
+
+#### Expectation vs. Reality
+
+
+We can use these empirical upset probabilities to simulate how many upsets in a particular round we would expect to see, then compare that to what has actually happened in reality. In the below table the column headers `pX` represent the probaility of X upsets, with X in [0,4]. 
+
+```{r}
+expectation <-
+do.call(rbind, 
+        lapply(upset_prob$upset_prob, function(x)  dbinom(0:4,4,x))) %>% # for every matchup and observed upset prob., calculate prob of X upsets 
+  data.frame() %>%
+  `colnames<-`(c("ep0","ep1","ep2","ep3","ep4")) # rename columns to designate these are expectations
+expectation$matchup <- c('1-16','2-15','3-14','4-13','5-12','6-11','7-10','8-9') # add variable containing matchup
+expectation %>% select(6,1:5) # reorder for display
+
+
+expectation_gather <-
+  expectation %>%
+  #select(matchup, rp0, rp1, rp2, rp3, rp4) %>%
+  gather(matchup, expected_prob, ep0:ep4) %>%
+   `colnames<-`(c("matchup","upsets","prob")) %>%
+  mutate(upsets = str_sub(upsets,3,3))
+
+expectation_gather
+```
+
+Now in each season calculate how often there actually have been 0,1,2,3,4 or 5 upsets.
+
+```{r}
+reality <-
+results2 %>%  
+  filter(matchup %in% c('1-16','2-15','3-14','4-13','5-12','6-11','7-10','8-9'), wregion==lregion) %>% # limit to first round games
+  group_by(season,matchup) %>%
+  summarise(num_upsets = sum(upset)) %>%
+  group_by(matchup,num_upsets) %>%
+  summarise(prop_upsets = n()/32) %>%
+  arrange(matchup,desc(prop_upsets)) %>%
+  spread(key = num_upsets, value = prop_upsets,fill = 0) %>%
+  `colnames<-`(c("matchup","rp0","rp1","rp2","rp3","rp4")) # rename columns to designate these are figures based in reality 
+  
+reality
+```
+
+
+```{r}
+?gather
+reality_gather <-
+  reality %>%
+  #select(matchup, rp0, rp1, rp2, rp3, rp4) %>%
+  gather(matchup, reality_prob, rp0:rp4) %>%
+   `colnames<-`(c("matchup","upsets","prob")) %>%
+  mutate(upsets = str_sub(upsets,3,3))
+
+reality_gather
+
+```
+
+
+```{r}
+joined_er <-
+  expectation_gather %>%
+  inner_join(reality_gather, by = c("matchup","upsets"))
+joined_er %>% arrange(matchup,upsets)
+```
+
+
+In the below chart presents the difference between the expected number of upsets in each round and the reality of what happened in the 33 tournments from 1985-2016. Positive values indicate that the result has happened less often than you would expect, whereas higher values indicate it has happend more often. All of these expectations result from extrapolating single game probabilities to a set of four games of each matchup each tournament.
+
+An important note here would be the scale of interpretation. If something happens 10% more or less often than expected, that means that it has happens either once more or less, on average, every ten years. So that isn't a big difference.  
+
+```{r}
+e_vs_r <-
+  expectation %>%
+  inner_join(reality, by = "matchup") %>%
+#  select(1,2,6,3,7,4,8,5,9) %>%
+  mutate(expectation_vs_reality0 = round(ep0 - rp0,2),
+         expectation_vs_reality1 = round(ep1 - rp1,2),
+         expectation_vs_reality2 = round(ep2 - rp2,2),
+         expectation_vs_reality3 = round(ep3 - rp3,2),
+         expectation_vs_reality4 = round(ep4 - rp4,2)) %>%
+  select(6,12:16)
+e_vs_r
+```
+
+What do we see here?
+* The largest magnitude differences are in the 4-13 games, where there haves been more tournaments with at least one upset than you would expect, but fewer tournments with two or more. 
+* In general, tournament-wide results appear in line with the data that combined all games from matcups together. This shouldn't be too surprising since the data was 
+
+### Some Recommendations
+
+I think looking at tournment level statistics is more helpful than single game instances. 
+
+```{r}
+  results2 %>%  
+  filter(matchup %in% c('1-16','2-15','3-14','4-13','5-12','6-11','7-10','8-9'), wregion==lregion) %>% # limit to first round games
+  group_by(season,matchup) %>%
+  summarise(num_upsets = sum(upset)) %>%
+  group_by(matchup,num_upsets) %>%
+  summarise(prop_upsets = n()/32) %>%
+  arrange(matchup,desc(prop_upsets)) %>%
+  spread(key = num_upsets, value = prop_upsets,fill = 0)
+```
+
+If you agree with this approach you could use the following heuristic, which is to choose the number of upsets based on how likely that number has occurred in each of the 33 tournaments in the past, by matchup.
+
+So, in this case you would choose:
+
+No upsets in matchups for:
+* 1-16, 2-15
+0-1 upsets in :
+* 3-14
+1 upset in :
+4-13, 5-12, 6-11
+1-2 upsets in 
+* 7-10, 8-9
+
+I gave a little wiggle room, based on the bracket selector's discretion, supported by two competing values for some matchups.
+
+That actually doesn't feel like a lot of upsets to pick, 6-8 spread across 6 of the different matchups. 
+
+### Conclusion
+
+I think this analysis demonstrates that the NCAA committee for the most part seeds appropriately. We are less likely to see upsets that involve lower numerically seeded teams. Upsets still do happen though. 
+
+
+
+In the course of doing this analysis I had some ideas for possible extensions:
+* Extend this analysis into the Round of 32 and beyond
+* compare chalk vs random brackets and points scored in traditional office-pool bracket scoring
+* extend analysis into a Bayesian one, using appropriate prior and conjugate distributions 
+
+
+### Postscript
+
+The first round of the 2018 tournament has come and gone. Below is a table showing my recommendations for number of upsets along with how many upsets actually happened.
+
+
+
