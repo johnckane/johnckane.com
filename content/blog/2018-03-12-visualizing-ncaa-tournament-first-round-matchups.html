@@ -1,0 +1,296 @@
+---
+title: NCAA Men's Tournament First Round Upsets
+author: John Kane
+date: '2018-04-08'
+slug: ncaa-first-round-upsets
+categories:
+  - R
+  - basketball
+  - March Madness
+tags:
+  - R
+  - basketball
+  - March Madness
+---
+
+
+
+<p>Unless you follow mid-major conferences closely, when it comes time to picking first round upsets in the NCAA Tournament you’re likely either picking teams at random, or going off the analysis of the “experts” on TV, the internet, or podcasts. I won’t address those who pick their upsets and Cinderella teams at random here, instead this post is about those who combine whatever they know about the field in a given year with what they see, read, and hear in the media. If you consume a lot this media you may be tempted to pick a lot of upsets, however by definition they should be rare.</p>
+<p>Thanks to a dataset from a <a href="https://www.kaggle.com/c/march-machine-learning-mania-2017/data">Kaggle competition</a> that provides tournament results from 1985-2016, I’ve put together an analysis that aims to offer guidance on how many upsets you could expect in the first round, and from which matchups they come from. I define an upset to be anytime a numerically higher seeds beats a numerically lower seed (e.g. a 10 seed beats a 7 seed).</p>
+<div id="data-prep" class="section level3">
+<h3>Data Prep</h3>
+<div id="load-libraries-and-data" class="section level4">
+<h4>Load libraries and data</h4>
+<pre class="r"><code>library(tidyverse)
+library(magrittr)
+library(knitr)
+results &lt;- read_csv(file = paste0(data_path,&quot;TourneyCompactResults.csv&quot;))
+seeds &lt;- read_csv(file = paste0(data_path,&quot;TourneySeeds.csv&quot;))
+slots &lt;- read_csv(file = paste0(data_path,&quot;TourneySlots.csv&quot;))
+seasons &lt;- read_csv(file = paste0(data_path,&quot;Seasons.csv&quot;))
+colnames(results) &lt;- tolower(colnames(results))
+colnames(seeds) &lt;- tolower(colnames(seeds))
+colnames(slots) &lt;- tolower(colnames(slots))
+colnames(seasons) &lt;- tolower(colnames(seasons))</code></pre>
+</div>
+<div id="light-data-cleaning" class="section level4">
+<h4>Light data cleaning</h4>
+<pre class="r"><code># convert colnames to lowercase
+colnames(results) &lt;- tolower(colnames(results))
+colnames(seeds) &lt;- tolower(colnames(seeds))
+colnames(slots) &lt;- tolower(colnames(slots))
+colnames(seasons) &lt;- tolower(colnames(seasons))
+
+# parse the seed variable to get the region and numeric seed
+seeds %&lt;&gt;%
+  mutate(region = str_sub(seed,1,1),
+         seed = as.numeric(str_sub(seed,2,3)))</code></pre>
+</div>
+<div id="restructure-the-data" class="section level4">
+<h4>Restructure the data</h4>
+<pre class="r"><code>results2 &lt;-
+  results %&gt;%
+  select(-daynum,-wscore,-lscore,-numot) %&gt;% # drop uneeded variables
+  inner_join(.,                              # append winning team seeds and regions
+             seeds %&gt;% rename(wseed = seed,wregion = region), 
+             by = c(&quot;season&quot;,&quot;wteam&quot; = &quot;team&quot;)) %&gt;%
+  inner_join(.,                             # append losing team seeds and regions
+             seeds %&gt;% rename(lseed = seed,lregion = region),
+             by = c(&quot;season&quot;,&quot;lteam&quot; = &quot;team&quot;)) %&gt;%
+  mutate(matchup = paste0(pmin(wseed,lseed),&quot;-&quot;,pmax(wseed,lseed)),# create new variables indicating the matchup 
+         upset =  ifelse(wseed &gt; lseed, 1,ifelse(wseed == lseed, 0.5,0))) %&gt;% # and if it was an upset
+  select(season,matchup,upset,wregion,lregion)
+
+head(results2)</code></pre>
+<pre><code>## # A tibble: 6 x 5
+##   season matchup upset wregion lregion
+##    &lt;int&gt;   &lt;chr&gt; &lt;dbl&gt;   &lt;chr&gt;   &lt;chr&gt;
+## 1   1985     8-9     1       X       X
+## 2   1985    6-11     1       Z       Z
+## 3   1985    1-16     0       W       W
+## 4   1985     8-9     1       Y       Y
+## 5   1985    3-14     0       Z       Z
+## 6   1985    5-12     1       X       X</code></pre>
+</div>
+</div>
+<div id="total-first-round-upsets" class="section level3">
+<h3>Total First Round Upsets</h3>
+<p>The first question to consider is how many upsets there are in a typical tournament. First we’ll aggregate the data to count the number of upsets by season.</p>
+<pre class="r"><code>total_upsets &lt;- results2 %&gt;%
+    filter(matchup %in% c(&#39;1-16&#39;,&#39;2-15&#39;,&#39;3-14&#39;,&#39;4-13&#39;,&#39;5-12&#39;,&#39;6-11&#39;,&#39;7-10&#39;,&#39;8-9&#39;), wregion==lregion) %&gt;%
+  group_by(season) %&gt;%
+  summarise(total_upsets = sum(upset))</code></pre>
+<p>Then, plot them.</p>
+<pre class="r"><code>ggplot(data = total_upsets,
+       aes(x = total_upsets)) +
+  geom_bar(fill = &quot;orange&quot;) +
+  scale_x_continuous(&quot;Total First Round Upsets&quot;,
+                     breaks = c(3,4,5,6,7,8,9,10,11,12,13)) +
+  scale_y_continuous(&quot;Percent&quot;) +
+  ggtitle(&quot;Number of Total First Round Upsets&quot;, sub = &quot;NCAA Men&#39;s Tournament, 1985-2016&quot;) +
+  theme_minimal()</code></pre>
+<p><img src="/blog/2018-03-12-visualizing-ncaa-tournament-first-round-matchups_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p>The obervations here are:</p>
+<ul>
+<li>There has always been at least 3 and never more than 13 total first round upsets.</li>
+<li>There have been between 7 and 10 (inclusive) upsets in rougly 2 out of every 3 (21/32) tournaments.</li>
+<li>It has been more likely to have fewer than 7 upsets 7/32 than more than 10 (4/32).</li>
+</ul>
+</div>
+<div id="total-upsets-by-matchup" class="section level3">
+<h3>Total Upsets By Matchup</h3>
+<p>The second question is from which matchups are most upsets sourced? To determine this question we’ll aggregate the data as before but add the additional level of aggregation of matchup.</p>
+<pre class="r"><code>by_matchup &lt;- results2 %&gt;%
+  filter(matchup %in% c(&#39;1-16&#39;,&#39;2-15&#39;,&#39;3-14&#39;,&#39;4-13&#39;,&#39;5-12&#39;,&#39;6-11&#39;,&#39;7-10&#39;,&#39;8-9&#39;), wregion==lregion) %&gt;%
+  group_by(season,matchup) %&gt;%
+  summarize(upsets = sum(upset))</code></pre>
+<p>Again, plot these data.</p>
+<pre class="r"><code>ggplot(data = by_matchup,
+       aes(x = upsets)) +
+  facet_wrap(~matchup,ncol = 4) +
+  geom_bar(fill = &quot;orange&quot;) +
+  scale_x_continuous(&quot;Upsets&quot;) +
+  scale_y_continuous(&quot;Count&quot;) +
+  ggtitle(&quot;Number of Upsets Each Year By Matchup&quot;,sub = &quot;NCAA Men&#39;s Tournament, 1985-2016&quot;) +
+    theme_minimal()</code></pre>
+<p><img src="/blog/2018-03-12-visualizing-ncaa-tournament-first-round-matchups_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<p>Some oberservations from this chart:</p>
+<ul>
+<li>The most likely outcome every year is:
+<ul>
+<li>0 upsets of 1 and 2 seeds</li>
+<li>at least one upset of each of teams seeded 3-7</li>
+<li>a tie of either 1 or 2 upsets of an 8 seed by a 9 seed.</li>
+</ul></li>
+</ul>
+</div>
+<div id="historical-trends-in-upsets" class="section level3">
+<h3>Historical Trends in Upsets</h3>
+<p>For those who have been following basketball for a while, an as of yet unaddressed consideration is the way college basketball has changed during the period represented in the data. The best players in the country have gone from staying in school for three or four years to playing only a single season. Sometimes, it seems now, higher seeded teams that may not have a lot of NBA caliber talent, but have more experience and chemistry, could have a better chance of upsetting teams with rosters with less chemistry but more individual talent.</p>
+<p>To address this we’ll look at the data in each of the first two plots but with an added component of time.</p>
+<pre class="r"><code>ggplot(data = total_upsets,
+       aes(x = season, y = total_upsets)) +
+  geom_point(colour = &quot;orange&quot;) +
+  geom_line(colour = &quot;orange&quot;) +
+  geom_smooth(method = &quot;loess&quot;) +
+  scale_x_continuous(&quot;Season&quot;,minor_breaks = c(1985:2016)) +
+  scale_y_continuous(&quot;Upsets&quot;, breaks = c(3:13)) +
+  ggtitle(&quot;Number of Total First Round Upsets By Year&quot;, sub = &quot;NCAA Men&#39;s Tournament, 1985-2016&quot;) +
+  theme_minimal()</code></pre>
+<p><img src="/blog/2018-03-12-visualizing-ncaa-tournament-first-round-matchups_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+<p>Some observations from this plot:</p>
+<ul>
+<li>For most of the tournament the best guess of the total number of upsets is somewhere between 7 and 9 (inclusive)</li>
+<li>5 of the 8 times there have been at least 10 first round upsets have happened since 2009.</li>
+<li>To that point, there is a slight trend upwards in recent years. That could justify picking more upsets than the historical record would indicate if recent time-trend data weren’t considered.</li>
+</ul>
+<p>The second plot considers the number of upsets by matchup over time.</p>
+<pre class="r"><code>ggplot(data = by_matchup,
+       aes(x = season, y = upsets)) +
+  facet_wrap(~matchup,ncol = 4) +
+  geom_line(colour = &quot;orange&quot;) +
+  geom_point(colour = &quot;orange&quot;) +
+  geom_smooth(method = &#39;loess&#39;) +
+  scale_x_continuous(&quot;Season&quot;) +
+  scale_y_continuous(&quot;Upsets&quot;) +
+  ggtitle(&quot;Number of Upsets By Season and Matchup&quot;,sub = &quot;NCAA Men&#39;s Tournament, 1985-2016&quot;) +
+  theme_minimal()</code></pre>
+<p><img src="/blog/2018-03-12-visualizing-ncaa-tournament-first-round-matchups_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+<p>Some observations from this plot:</p>
+<ul>
+<li>In the last few years there appears to be a trend for an increased likelihood of upsets in the 2-15 and 3-14 games going from zero to one upset.</li>
+<li>A trend for upsets in 5-12 games appears to have been a slow, ongoing phenomenon since the tournament began. Going from one in the 1980s to two today.</li>
+<li>A trend for an upset in 6-11 games appears to have begun back around the year 2000, going from one at the time to two today.</li>
+</ul>
+<p>Trends in the 2-15 and 3-14 games are very recent, whereas at least visually the 5-12 and 6-11 games appear to have more support.</p>
+</div>
+<div id="suggested-approach-to-picking-first-round-upsets" class="section level3">
+<h3>Suggested Approach to Picking First Round Upsets</h3>
+<p>Based on this analysis you could use the following heuristic for selecting how many upsets to pick and in which matchups to pick them. I’m going uitilize the apparent trend in increase of upsets in 5-12 and 6-11 matchups that was seen in the plot above. Of course which individual games to select requires some additional analysis.</p>
+<p>Some resonable guidlines are presented in the table below.</p>
+<table>
+<thead>
+<tr class="header">
+<th>Matchup</th>
+<th>Recommended Upsets to Pick</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1-16</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td>2-15</td>
+<td>0</td>
+</tr>
+<tr class="odd">
+<td>3-14</td>
+<td>0/1</td>
+</tr>
+<tr class="even">
+<td>4-13</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td>5-12</td>
+<td>2</td>
+</tr>
+<tr class="even">
+<td>6-11</td>
+<td>2</td>
+</tr>
+<tr class="odd">
+<td>7-10</td>
+<td>1/2</td>
+</tr>
+<tr class="even">
+<td>8-9</td>
+<td>1/2</td>
+</tr>
+<tr class="odd">
+<td>———</td>
+<td>—————————-</td>
+</tr>
+<tr class="even">
+<td>Totals</td>
+<td>7-10</td>
+</tr>
+</tbody>
+</table>
+<p>These recommendations based in individual matchups place the total number of upsets selected in the range of most frequent number of upsets.</p>
+</div>
+<div id="conclusion-and-further-work" class="section level3">
+<h3>Conclusion and Further Work</h3>
+<p>In the course of doing this analysis I had some ideas for possible extensions:</p>
+<ul>
+<li>Extend this analysis into the Round of 32 and beyond</li>
+<li>Compare chalk vs random upset picking based on these heuristics on the traditional bracket scoring.</li>
+<li>Expand the analysis with a Bayesian flavor, using appropriate prior and conjugate distributions for likelihoods of upsets by matchup and total number of upsets.</li>
+</ul>
+</div>
+<div id="postscript" class="section level3">
+<h3>Postscript</h3>
+<p>The first round of the 2018 tournament has come and gone. Below is a table showing my recommendations for number of upsets along with how many upsets actually happened.</p>
+<table>
+<thead>
+<tr class="header">
+<th>Matchup</th>
+<th>Recommended Upsets to Pick</th>
+<th>Upsets in 2018</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1-16</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td>2-15</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr class="odd">
+<td>3-14</td>
+<td>0/1</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td>4-13</td>
+<td>1</td>
+<td>2</td>
+</tr>
+<tr class="odd">
+<td>5-12</td>
+<td>2</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td>6-11</td>
+<td>2</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td>7-10</td>
+<td>1/2</td>
+<td>1</td>
+</tr>
+<tr class="even">
+<td>8-9</td>
+<td>1/2</td>
+<td>3</td>
+</tr>
+<tr class="odd">
+<td>———</td>
+<td>—————————-</td>
+<td>—————-</td>
+</tr>
+<tr class="even">
+<td>Totals</td>
+<td>7-10</td>
+<td>8</td>
+</tr>
+</tbody>
+</table>
+</div>

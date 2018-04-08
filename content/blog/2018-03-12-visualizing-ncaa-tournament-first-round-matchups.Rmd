@@ -73,25 +73,75 @@ results2 <-
 head(results2)
 ```
 
-### Historical Trends in Upsets
+### Total First Round Upsets
 
-A point I want to address in the beginning is the way college basketball has changed during the period represented in the data. The best players in the country have gone from staying in school for three or four years to playing only a single season. Sometimes, it seems now, higher seeded teams that may not have a lot of NBA caliber talent, but have more experience and chemistry, could have a better chance of upsetting teams with rosters with less chemistry but more individual talent.
-
-To consider this question further, we'll aggregate the data by season, then consider total number of upsets as well as upsets by matchup.
+The first question to consider is how many upsets there are in a typical tournament. First we'll aggregate the data to count the number of upsets by season.
 
 ```{r}
 total_upsets <- results2 %>%
     filter(matchup %in% c('1-16','2-15','3-14','4-13','5-12','6-11','7-10','8-9'), wregion==lregion) %>%
   group_by(season) %>%
   summarise(total_upsets = sum(upset))
+```
 
+Then, plot them.
+
+```{r}
+ggplot(data = total_upsets,
+       aes(x = total_upsets)) +
+  geom_bar(fill = "orange") +
+  scale_x_continuous("Total First Round Upsets",
+                     breaks = c(3,4,5,6,7,8,9,10,11,12,13)) +
+  scale_y_continuous("Percent") +
+  ggtitle("Number of Total First Round Upsets", sub = "NCAA Men's Tournament, 1985-2016") +
+  theme_minimal()
+```
+
+
+The obervations here are:
+
+* There has always been at least 3 and never more than 13 total first round upsets.
+* There have been between 7 and 10 (inclusive) upsets in rougly 2 out of every 3 (21/32) tournaments.
+* It has been more likely to have fewer than 7 upsets 7/32 than more than 10 (4/32). 
+
+
+### Total Upsets By Matchup
+
+The second question is from which matchups are most upsets sourced? To determine this question we'll aggregate the data as before but add the additional level of aggregation of matchup. 
+
+```{r}
 by_matchup <- results2 %>%
   filter(matchup %in% c('1-16','2-15','3-14','4-13','5-12','6-11','7-10','8-9'), wregion==lregion) %>%
   group_by(season,matchup) %>%
   summarize(upsets = sum(upset))
 ```
 
-The first plot considers total number of upsets in each tournament.
+Again, plot these data.
+
+```{r}
+ggplot(data = by_matchup,
+       aes(x = upsets)) +
+  facet_wrap(~matchup,ncol = 4) +
+  geom_bar(fill = "orange") +
+  scale_x_continuous("Upsets") +
+  scale_y_continuous("Count") +
+  ggtitle("Number of Upsets Each Year By Matchup",sub = "NCAA Men's Tournament, 1985-2016") +
+    theme_minimal()
+
+```
+
+Some oberservations from this chart:
+
+* The most likely outcome every year is:
+    * 0 upsets of 1 and 2 seeds
+    * at least one upset of each of teams seeded 3-7
+    * a tie of either 1 or 2 upsets of an 8 seed by a 9 seed.
+
+### Historical Trends in Upsets
+
+For those who have been following basketball for a while, an as of yet unaddressed consideration is the way college basketball has changed during the period represented in the data. The best players in the country have gone from staying in school for three or four years to playing only a single season. Sometimes, it seems now, higher seeded teams that may not have a lot of NBA caliber talent, but have more experience and chemistry, could have a better chance of upsetting teams with rosters with less chemistry but more individual talent.
+
+To address this we'll look at the data in each of the first two plots but with an added component of time.
 
 ```{r}
 ggplot(data = total_upsets,
@@ -109,7 +159,7 @@ Some observations from this plot:
 
 * For most of the tournament the best guess of the total number of upsets is somewhere between 7 and 9 (inclusive)
 * 5 of the 8 times there have been at least 10 first round upsets have happened since 2009. 
-* To that point, there is a slight trend upwards in recent years. However I won't jump to a conclusion that anything is necessarily different. But at the same time it could justify picking more upsets than the historical record would indicate.
+* To that point, there is a slight trend upwards in recent years. That could justify picking more upsets than the historical record would indicate if recent time-trend data weren't considered.
 
 The second plot considers the number of upsets by matchup over time.
 
@@ -129,107 +179,16 @@ ggplot(data = by_matchup,
 Some observations from this plot:
 
 * In the last few years there appears to be a trend for an increased likelihood of upsets in the 2-15 and 3-14 games going from zero to one upset.
-* A trend for upsets in 5-12 games appears to have been a slow, ongoing phenomenon since the tournament began. Going from one in the 1980's to two today.
+* A trend for upsets in 5-12 games appears to have been a slow, ongoing phenomenon since the tournament began. Going from one in the 1980s to two today.
 * A trend for an upset in 6-11 games appears to have begun back around the year 2000, going from one at the time to two today. 
 
 Trends in the 2-15 and 3-14 games are very recent, whereas at least visually the 5-12 and 6-11 games appear to have more support. 
 
-### Single Game Upset Probabilities
-
-What is the chance of an upset in any one game? We can use the data to determine an empirical upset probability. 
-
-```{r}
-upset_prob <- 
-results2 %>%
-  filter(matchup %in% c('1-16','2-15','3-14','4-13','5-12','6-11','7-10','8-9'), wregion==lregion) %>% # Limit to 1st round games
-  group_by(matchup) %>%
-  summarise(upset_prob = sum(upset)/n())
-upset_prob
-```
-
-One way to use this information to pick your bracket would be for each game roll a weighted die through the `sample()` function in R to determine if there was an upset or not. 
-
-For example, to pick the winner of a 7-10 game (p = 0.39 for an upset), you would use:
-
-```{r}
-set.seed(123)
-p <- 0.39
-sample(c(1,0),1,prob = c(p,1-p))
-```
-
-Indicating you would not choose an upset for this game.
-
-A second way to use the empirical upset probabilities would be to allow yourself a little discretion with who you choose to be upset. In the previous example you are the mercy of the die in each instance. You may end up picking a 3-14 upset, but not the one that seems most likely based on other datapoints (e.g. your own analysis, media takes) you receive. 
-
-So instead what you can do is roll the die for all four matchups in a given tournament and then, if there are any upsets, you can choose which ones to fill in your bracket.
-
-For example, you can pick the number of upsets in the four 7-10 matchups this way:
-
-```{r}
-set.seed(123)
-p <- 0.39
-sample(c(1,0),4,prob = c(p,1-p), replace = TRUE)
-```
-
-So in this case you would select, based on additional analysis, two of the four ten seeds to win. 
-
-A valid critique of this approach is that you are still leaving a lot of things to chance, in the above example two upsets were selected, but the most likely outcome is actually for only one upset, albeit only slightly. You can confirm this with the following call to `dbinom()`:
-
-```{r}
-c(dbinom(1,4,0.39),dbinom(2,4,0.39))
-```
-
-So this approach may be leaving still too much to chance for many.
-
-### Most Likely Number of Upsets
-
-A less variable way to do this would be to choose how many upsets to select in given matchups based on historic tournment-wide results. For example, in how many of the 32 tournaments in this analysis has there been 1 upset in the 2-15 games? 
-
-There are two constraints by this approach. The first is the total number of upsets, the second is from which matchups the upsets come from. 
-
-##### Total First Round Upsets
-
-What if we zoom out and consider how many total upsets there are in a given year. That would complement the number of upsets in each matchup and provide how many total upsets we may expect to see, and where we would expect to see them.
-
-```{r}
-ggplot(data = total_upsets,
-       aes(x = total_upsets)) +
-  geom_bar(fill = "orange") +
-  scale_x_continuous("Total First Round Upsets",
-                     breaks = c(3,4,5,6,7,8,9,10,11,12,13)) +
-  scale_y_continuous("Percent") +
-  ggtitle("Number of Total First Round Upsets", sub = "NCAA Men's Tournament, 1985-2016") +
-  theme_minimal()
-```
-
-The obervations here are:
-* There has always been at least 3 and never more than 13 total first round upsets.
-* There have been between 7 and 10 (inclusive) upsets in 21/32 tournaments.
-* You are more likely to have fewer than 7 upsets 7/32 than more than 10 (4/32). 
-
-##### Number of upsets each year, by matchup
-
-```{r}
-ggplot(data = by_matchup,
-       aes(x = upsets)) +
-  facet_wrap(~matchup,ncol = 4) +
-  geom_bar(fill = "orange") +
-  scale_x_continuous("Upsets") +
-  scale_y_continuous("Count") +
-  ggtitle("Number of Upsets Each Year By Matchup",sub = "NCAA Men's Tournament, 1985-2016") +
-    theme_minimal()
-
-```
-
-Some oberservations from this chart:
-    * The most likely outcome every year is for there to be 0 upsets of 1 and 2 seeds, with at least one upset of each of teams seeded 3-7, with a tie of either 1 or 2 upsets of an 8 seed by a 9 seed.
-    * There is more dispersion in the number of upsets as you move from the 1-16 to the 8-9 games.
-
 ### Suggested Approach to Picking First Round Upsets
 
-Based on this analysis you could use the following heuristic for selecting how many upsets to pick and in which matchups to pick them. Of course which individual games to select requires some additional analysis.
+Based on this analysis you could use the following heuristic for selecting how many upsets to pick and in which matchups to pick them. I'm going uitilize the apparent trend in increase of upsets in 5-12 and 6-11 matchups that was seen in the plot above. Of course which individual games to select requires some additional analysis.
 
-So, in this case you would choose:
+Some resonable guidlines are presented in the table below. 
 
 | Matchup | Recommended Upsets to Pick |
 |---------|----------------------------|
@@ -237,23 +196,24 @@ So, in this case you would choose:
 | 2-15    | 0                          | 
 | 3-14    | 0/1                        | 
 | 4-13    | 1                          | 
-| 5-12    | 1                          | 
-| 6-11    | 1                          | 
+| 5-12    | 2                          | 
+| 6-11    | 2                          | 
 | 7-10    | 1/2                        | 
 | 8-9     | 1/2                        | 
 |---------|----------------------------|
-|Totals   | 5-8                        |
+|Totals   | 7-10                       |
 
-At minimum these recommendations will provide 5 upsets, but as we saw above there are usually between 7 and 10 upsets. The high end of this scale puts you into the range of most expected upsets, and recent trends may justify going upwards of 9 or 10. Based on historical results it seems best to source additional upsets from the 8-9, 7-10 or 6-11 games.
+These recommendations based in individual matchups place the total number of upsets selected in the range of most frequent number of upsets. 
 
 ### Conclusion and Further Work
 
-I think this analysis demonstrates that the likelihood of upsets 
+
 
 In the course of doing this analysis I had some ideas for possible extensions:
+
 * Extend this analysis into the Round of 32 and beyond
-* compare chalk vs random brackets and points scored in traditional office-pool bracket scoring
-* extend analysis into a Bayesian one, using appropriate prior and conjugate distributions 
+* Compare chalk vs random upset picking based on these heuristics on the traditional bracket scoring. 
+* Expand the analysis with a Bayesian flavor, using appropriate prior and conjugate distributions for likelihoods of upsets by matchup and total number of upsets. 
 
 ### Postscript
 
@@ -265,10 +225,12 @@ The first round of the 2018 tournament has come and gone. Below is a table showi
 | 2-15    | 0                          | 0              |
 | 3-14    | 0/1                        | 0              |
 | 4-13    | 1                          | 2              |
-| 5-12    | 1                          | 0              |
-| 6-11    | 1                          | 1              |
+| 5-12    | 2                          | 0              |
+| 6-11    | 2                          | 1              |
 | 7-10    | 1/2                        | 1              |
 | 8-9     | 1/2                        | 3              |
 |---------|----------------------------|----------------|
-|Totals   | 5-8                        | 8              |
+|Totals   | 7-10                       | 8              |
+
+
 

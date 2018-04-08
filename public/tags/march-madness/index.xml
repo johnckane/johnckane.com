@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>March Madness on John Kane</title>
+    <link>/tags/march-madness/</link>
+    <description>Recent content in March Madness on John Kane</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-US</language>
+    <lastBuildDate>Sun, 08 Apr 2018 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="/tags/march-madness/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>NCAA Men&#39;s Tournament First Round Upsets</title>
+      <link>/blog/ncaa-first-round-upsets/</link>
+      <pubDate>Sun, 08 Apr 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/blog/ncaa-first-round-upsets/</guid>
+      <description>Unless you follow mid-major conferences closely, when it comes time to picking first round upsets in the NCAA Tournament you’re likely either picking teams at random, or going off the analysis of the “experts” on TV, the internet, or podcasts. I won’t address those who pick their upsets and Cinderella teams at random here, instead this post is about those who combine whatever they know about the field in a given year with what they see, read, and hear in the media.</description>
+    </item>
+    
+  </channel>
+</rss>
