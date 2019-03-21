@@ -1,0 +1,285 @@
+---
+title: "Visualizing Gradient Boosting Decision Trees for Classification"
+author: "John Kane"
+date: '2019-03-22'
+slug: visualizing-gradient-boosting
+tags:
+- machine learning
+- gbm
+categories:
+- machine learning
+- gbm
+---
+
+## Introduction
+
+Gradient boosting has proven to be a popular and successful learning algorightm in both machine learning competitions and in production commercially. (LINKS for both). 
+
+Given the success the algroithm as experienced, several years ago when I was learning about the algorithm I came across a (post)[] outlining how boosting gradually moves closer to the goal output. 
+
+Gradient boosted trees provide these advantages along with the advantage of capturing non-linear relationships among the variables.
+
+In this post I highlight the algorithm, write code to fit this model, and apply it to a dataset where the output is a non-linear function of the input. 
+
+## Algorithm
+
+In *An Introduction to Statistical Learning* by James, Witten, Hastie, and Tibshirani they lay out the boosting algorithm on page 322:
+
+1. Set $\hat{f}(x)$ = 0 and $r_{i}$ = $y_{i}$ for all $i$ in the training set.
+2. For $b$ = 1,2,...,B, repeat:
+    a. Fit a tree $\hat{f}^{b}$ with d splits (d+1 terminal nodes) to the training data (X,r).
+    b. Update $\hat{f}$ by adding in a shrunken version of the new tree:
+        $\hat{f}(x)\leftarrow\hat{f}(x)+\lambda\hat{f}^{b}(x)$.
+    c. Update the residuals,
+        $r_{i}\leftarrow r_{i} - \lambda\hat{f}^{b}(x_{i})$.
+3. Output the boosted model,
+  $\hat{f}(x) = \sum_{b=1}^{B}\lambda \hat{f}^{b}(x)$
+  
+## Paraphrasing the Alrgorithm, Without Mathematical Notation
+
+1. Set all predictions to 0, and calculate the residuals (will be the value of $y$ since all predictions are 0).
+2. At each of $B$ iterations do:
+    a. Fit a classication tree to the data, mapping the residual, $r$, from the input, $X$. 
+    b. Update your predictions by adding a fraction of what the model predicted.
+    c. Update the residuals to reflect the shrunken predictions.
+3. The final model is the sum of sequentially adding up the predictions from all the fitted trees.
+
+
+## Data
+
+I'll create a fake dataset with a non-linear relationship between the input and the output. The output `y` takes on a value of either 0 or 1 based on the value of `X`.  
+
+```{r}
+X <- seq(from = 0, to = 100, by = 1)
+y <- ifelse(X <= 15,1,
+            ifelse(X <= 25,0,
+                   ifelse(X <= 45,1,
+                          ifelse(X <= 70,0,
+                                 ifelse(X <= 95,1,0)))))
+plot(x = X, y = y,pch = 20)
+```
+
+
+
+
+## Code
+
+0. Load libraries, instantiate R objects to store intermediate results and set hyperparameters.
+```{r}
+library(tibble)
+library(rpart)
+trees <- list()
+predictions <- list()
+losses <- numeric()
+logloss_func <- function(y,yhat){
+  sum(-y*log(yhat+1e-8) + (1-yhat)*log(1-yhat+1e-8)) # add stability to log calculation
+}
+B = 50
+lambda = 0.2
+```
+
+1. Set $\hat{f}(x)$ = 0 and $r_{i}$ = $y_{i}$ for all $i$ in the training set.
+
+We'll use `yhat` for predictions and `r` for residuals. 
+
+```{r}
+data <- tibble(X,y)
+data$yhat <- rep(0,times = nrow(data))
+data$r <- data$y - data$yhat
+```
+
+
+2. For $b$ = 1,2,...,B, repeat:
+    a. Fit a tree $\hat{f}^{b}$ with d splits (d+1 terminal nodes) to the training data (X,r).
+    b. Update $\hat{f}$ by adding in a shrunken version of the new tree:
+    $\hat{f}(x)\leftarrow\hat{f}(x)+\lambda\hat{f^{b}}(x)$.
+    c. Update the residuals,
+    $r_{i}\leftarrow r_{i} - \lambda\hat{f}^{b}(x_{i})$.
+    
+```{r}
+for(b in 1:B){
+  # Part a
+  fit <- rpart(r ~ X, data=data, maxdepth = 1, method = "anova")
+  # Part b
+  data$yhat <- data$yhat + lambda*predict(fit,newdata=data)
+  # Part c
+  data$r <- data$r - lambda*predict(fit,newdata=data)
+  
+  # Save intermediate results for visualization later, and remove current tree
+  trees[b] <- list(fit)
+  losses <- c(losses,logloss_func(data$y,data$yhat))
+  predictions[[b]] <- tibble(X = data$X,
+                           yhat = data$yhat)
+  rm(fit)
+}
+```
+
+3. Output the boosted model,
+  $\hat{f}(x) = \sum_{b=1}^{B}\lambda \hat{f}^{b}(x)$
+  
+
+```{r}
+boost_prediction <- function(X,num_trees){
+  pred <- numeric(length = length(X))
+  for(j in c(1:num_trees)){
+    pred <- pred + lambda*predict(trees[[j]],newdata = data.frame(X = X))
+  }
+  return(pred)
+}
+```
+
+
+
+#### Make predictions
+
+To illustrate the sequential nature of making predictions, I'll generate predictions for five $X$ values, and print out the model's predictions using 5, 10, or 50 trees.
+
+```{r}
+vals_to_predict <- c(5,25,35,60,99)
+prediction_tibble <- tibble(x = vals_to_predict,
+                            y = data$y[vals_to_predict + 1], # the first value of X is 0 so the index of x is x+1 
+                            five_trees = sapply(vals_to_predict,boost_prediction,num_trees = 5),
+                            ten_trees = sapply(vals_to_predict,boost_prediction,num_trees = 10),
+                            fifty_trees = sapply(vals_to_predict,boost_prediction,num_trees = 50))
+prediction_tibble
+```
+
+#### Applications to validation and test datasets
+
+When doing a machine learning project and the final goal is to produce a model that performs well on data previously unseen by the model, it is best to have some idea of how accurate those predictions are before the model is published. Best practices are to split the available data into training, validation, and test datasets. 
+
+
+The above approach highlights 
+
+
+
+## Visualize 
+
+We'll need the following libraries to visualize
+
+```{r}
+library(ggplot2)
+library(gganimate)
+library(magick)
+```
+
+
+#### Building visualization datasets
+
+
+```{r}
+loss_plot_data <- tibble(iteration = c(1:B),
+                                  loss = losses)
+
+boost_plot_data <- do.call(rbind,predictions)
+boost_plot_data$B <- rep(c(1:B), each = 101)
+boost_plot_data$y <- rep(data$y,times = B)
+```
+
+
+## Magick
+
+```{r}
+## This code does all the creating of the 
+boost_plot <- ggplot(data = boost_plot_data,
+       aes(x = X,y = y),
+       colour = 'black') +
+  geom_point() +
+  geom_point(aes(x = X, y = yhat), colour = 'red') +
+  transition_states(B) +
+  labs(title = 'Iteration: {closest_state}', subtitle = "Boosting",x = 'X', y = 'y')
+
+loss_plot <- ggplot(data = loss_plot_data,
+                aes(x = iteration, y = loss),
+                colour = 'black') +
+  geom_point() +
+  geom_line() +
+  transition_reveal(along = iteration) +
+  shadow_trail(distance = 1/B) +
+  labs(title = ' ', subtitle = 'Loss')
+
+loss_gif <- animate(loss_plot,width = 400, height = 400)
+boost_gif <- animate(boost_plot, width = 400, height = 400)
+  
+loss_mgif <- image_read(loss_gif)
+boost_mgif <- image_read(boost_gif)
+
+combined_gif <- image_append(c(boost_mgif[1], loss_mgif[1]))
+
+for(i in 2:100){
+  combined <- image_append(c(boost_mgif[i], loss_mgif[i]))
+  combined_gif <- c(combined_gif, combined)
+}
+
+
+magick::image_write(combined_gif, path="/home/john/johnckane.com/static/img/boosting-and-loss.gif")
+```
+
+
+#### Create the individual plots
+
+
+```{r, eval = FALSE}
+boost_plot <- ggplot(data = boost_plot_data,
+       aes(x = X,y = y),
+       colour = 'black') +
+  geom_point() +
+  geom_point(aes(x = X, y = yhat), colour = 'red') +
+  transition_states(B) +
+  labs(title = 'Iteration: {closest_state}', subtitle = "Boosting",x = 'X', y = 'y')
+
+boost_gif <- animate(boost_plot, width = 400, height = 400)
+```
+
+
+```{r, eval = FALSE}
+loss_plot <- ggplot(data = loss_plot_data,
+                aes(x = iteration, y = loss),
+                colour = 'black') +
+  geom_point() +
+  geom_line() +
+  transition_reveal(along = iteration) +
+  shadow_trail(distance = 1/B) +
+  labs(title = ' ', subtitle = 'Loss')
+
+loss_gif <- animate(loss_plot,width = 400, height = 400)
+```
+
+
+#### Combine the gifs and view
+```{r, eval = FALSE}
+loss_mgif <- image_read(loss_gif)
+boost_mgif <- image_read(boost_gif)
+
+combined_gif <- image_append(c(boost_mgif[1], loss_mgif[1]))
+
+for(i in 2:100){
+  combined <- image_append(c(boost_mgif[i], loss_mgif[i]))
+  combined_gif <- c(combined_gif, combined)
+}
+
+combined_gif
+```
+
+
+
+
+
+![](/home/john/johnckane.com/static/img/boosting-and-loss.gif)
+
+
+
+## References
+
+https://freakonometrics.hypotheses.org/19874
+
+James, Gareth Michael., et al. An Introduction to Statistical Learning with Applications in R. Springer, 2013.
+
+https://github.com/thomasp85/gganimate/wiki/Animation-Composition
+
+
+## Session Info
+```{r}
+sessionInfo()
+```
+
