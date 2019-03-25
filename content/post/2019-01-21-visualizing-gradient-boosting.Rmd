@@ -19,7 +19,7 @@ Given the success the algroithm as experienced, several years ago when I was lea
 
 Gradient boosted trees provide these advantages along with the advantage of capturing non-linear relationships among the variables.
 
-In this post I highlight the algorithm, write code to fit this model, and apply it to a dataset where the output is a non-linear function of the input. 
+In this post I highlight the algorithm, write code to fit this model, apply it to a dataset where the output is a non-linear function of the input, and visualize the boosting process and associated decrease in the loss function. 
 
 ## Algorithm
 
@@ -35,7 +35,7 @@ In *An Introduction to Statistical Learning* by James, Witten, Hastie, and Tibsh
 3. Output the boosted model,
   $\hat{f}(x) = \sum_{b=1}^{B}\lambda \hat{f}^{b}(x)$
   
-## Paraphrasing the Alrgorithm, Without Mathematical Notation
+## Paraphrasing the Algorithm, Without Mathematical Notation
 
 1. Set all predictions to 0, and calculate the residuals (will be the value of $y$ since all predictions are 0).
 2. At each of $B$ iterations do:
@@ -62,9 +62,9 @@ plot(x = X, y = y,pch = 20)
 
 
 
-## Code
+## Coding the Algorithm
 
-0. Load libraries, instantiate R objects to store intermediate results and set hyperparameters.
+0. Load libraries, instantiate R objects to store intermediate results, write loss function, and set hyperparameters.
 ```{r}
 library(tibble)
 library(rpart)
@@ -130,7 +130,7 @@ boost_prediction <- function(X,num_trees){
 
 
 
-#### Make predictions
+### Making predictions and applications to validation and test sets. 
 
 To illustrate the sequential nature of making predictions, I'll generate predictions for five $X$ values, and print out the model's predictions using 5, 10, or 50 trees.
 
@@ -144,18 +144,17 @@ prediction_tibble <- tibble(x = vals_to_predict,
 prediction_tibble
 ```
 
-#### Applications to validation and test datasets
+As seen in the above output, as the data are exposed to more trees, the predictions become better. 
 
-When doing a machine learning project and the final goal is to produce a model that performs well on data previously unseen by the model, it is best to have some idea of how accurate those predictions are before the model is published. Best practices are to split the available data into training, validation, and test datasets. 
+Typically the objective of a machine learning project is to produce a model that performs well on data previously unseen by the model. Before deploying the model it is wise to have an idea of well it will make predictions on data that weren't used to train it. Best practice in this case is to split available data into training, validation, and test datasets. The training dataset is used to fit the model, performance of the model at varying values of hyperparameters is evaluated using the validation dataset, and once a single is model is chosen for deployment, an estimate of model performance on previously unseen data is estimated by model performance on the test dataset. 
 
+Hyperparameter tuning and model selection is not the focus of this post, but there are glimpses of its application. The hyperparameters here are the number of trees $B$ and the value of the learning rate, $\lambda$. In this example $\lambda$ remained fixed and we iterated our model fitting over $B$ different trees. 
 
-The above approach highlights 
-
-
+It is generally true that model-fit metrics strictly improve when fitting and evaluating on the training dataset. This is not the case with validation datasets. At a certain point the model begins to learn the idiosyncracies of the training data, rather than a more general relationship between features and output of the data generating mechanism.
 
 ## Visualize 
 
-We'll need the following libraries to visualize
+The boosting procedure is an iterative process, which lends itself nicely to visualization. In the model fitting code we saved the values of the loss function after every iteration, as well as the fitted values of the model. Here we'll construct a visualization of the process. 
 
 ```{r}
 library(ggplot2)
@@ -177,49 +176,10 @@ boost_plot_data$y <- rep(data$y,times = B)
 ```
 
 
-## Magick
-
-```{r}
-## This code does all the creating of the 
-boost_plot <- ggplot(data = boost_plot_data,
-       aes(x = X,y = y),
-       colour = 'black') +
-  geom_point() +
-  geom_point(aes(x = X, y = yhat), colour = 'red') +
-  transition_states(B) +
-  labs(title = 'Iteration: {closest_state}', subtitle = "Boosting",x = 'X', y = 'y')
-
-loss_plot <- ggplot(data = loss_plot_data,
-                aes(x = iteration, y = loss),
-                colour = 'black') +
-  geom_point() +
-  geom_line() +
-  transition_reveal(along = iteration) +
-  shadow_trail(distance = 1/B) +
-  labs(title = ' ', subtitle = 'Loss')
-
-loss_gif <- animate(loss_plot,width = 400, height = 400)
-boost_gif <- animate(boost_plot, width = 400, height = 400)
-  
-loss_mgif <- image_read(loss_gif)
-boost_mgif <- image_read(boost_gif)
-
-combined_gif <- image_append(c(boost_mgif[1], loss_mgif[1]))
-
-for(i in 2:100){
-  combined <- image_append(c(boost_mgif[i], loss_mgif[i]))
-  combined_gif <- c(combined_gif, combined)
-}
-
-
-magick::image_write(combined_gif, path="/home/john/johnckane.com/static/img/boosting-and-loss.gif")
-```
-
-
 #### Create the individual plots
 
 
-```{r, eval = FALSE}
+```{r}
 boost_plot <- ggplot(data = boost_plot_data,
        aes(x = X,y = y),
        colour = 'black') +
@@ -232,7 +192,7 @@ boost_gif <- animate(boost_plot, width = 400, height = 400)
 ```
 
 
-```{r, eval = FALSE}
+```{r}
 loss_plot <- ggplot(data = loss_plot_data,
                 aes(x = iteration, y = loss),
                 colour = 'black') +
@@ -247,6 +207,21 @@ loss_gif <- animate(loss_plot,width = 400, height = 400)
 
 
 #### Combine the gifs and view
+
+```{r, include = F}
+loss_mgif <- image_read(loss_gif)
+boost_mgif <- image_read(boost_gif)
+
+combined_gif <- image_append(c(boost_mgif[1], loss_mgif[1]))
+
+for(i in 2:100){
+  combined <- image_append(c(boost_mgif[i], loss_mgif[i]))
+  combined_gif <- c(combined_gif, combined)
+}
+
+magick::image_write(combined_gif, path="/home/john/johnckane.com/static/img/boosting-and-loss.gif")
+```
+
 ```{r, eval = FALSE}
 loss_mgif <- image_read(loss_gif)
 boost_mgif <- image_read(boost_gif)
@@ -260,10 +235,6 @@ for(i in 2:100){
 
 combined_gif
 ```
-
-
-
-
 
 ![](/home/john/johnckane.com/static/img/boosting-and-loss.gif)
 
