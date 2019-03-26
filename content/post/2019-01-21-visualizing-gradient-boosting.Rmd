@@ -6,18 +6,23 @@ slug: visualizing-gradient-boosting
 tags:
 - machine learning
 - gbm
+- data visualization
 categories:
 - machine learning
 - gbm
+- data visualization
 ---
 
 ## Introduction
 
+In machine learning tasks decision trees perform well when the relationship between the input and the response is non-linear.
+314
+
 Gradient boosting has proven to be a popular and successful learning algorightm in both machine learning competitions and in production commercially. (LINKS for both). 
 
-Given the success the algroithm as experienced, several years ago when I was learning about the algorithm I came across a (post)[] outlining how boosting gradually moves closer to the goal output. 
+Therefore it follows the gradient bossted decision trees should perform well.
 
-Gradient boosted trees provide these advantages along with the advantage of capturing non-linear relationships among the variables.
+Rarely datasets and models in the wild are straightforward in the same way textbook examples are. It can be hard to understand exactly how a model is making its predictions. When I was first learning the boosting algorithm I came across a (post)[] outlining in a regression context how boosting gradually moves closer to the goal output. 
 
 In this post I highlight the algorithm, write code to fit this model, apply it to a dataset where the output is a non-linear function of the input, and visualize the boosting process and associated decrease in the loss function. 
 
@@ -76,6 +81,7 @@ logloss_func <- function(y,yhat){
 }
 B = 50
 lambda = 0.2
+maxdepth = 1
 ```
 
 1. Set $\hat{f}(x)$ = 0 and $r_{i}$ = $y_{i}$ for all $i$ in the training set.
@@ -99,7 +105,7 @@ data$r <- data$y - data$yhat
 ```{r}
 for(b in 1:B){
   # Part a
-  fit <- rpart(r ~ X, data=data, maxdepth = 1, method = "anova")
+  fit <- rpart(r ~ X, data=data, maxdepth = maxdepth, method = "anova")
   # Part b
   data$yhat <- data$yhat + lambda*predict(fit,newdata=data)
   # Part c
@@ -129,34 +135,11 @@ boost_prediction <- function(X,num_trees){
 ```
 
 
-
-### Making predictions and applications to validation and test sets. 
-
-To illustrate the sequential nature of making predictions, I'll generate predictions for five $X$ values, and print out the model's predictions using 5, 10, or 50 trees.
-
-```{r}
-vals_to_predict <- c(5,25,35,60,99)
-prediction_tibble <- tibble(x = vals_to_predict,
-                            y = data$y[vals_to_predict + 1], # the first value of X is 0 so the index of x is x+1 
-                            five_trees = sapply(vals_to_predict,boost_prediction,num_trees = 5),
-                            ten_trees = sapply(vals_to_predict,boost_prediction,num_trees = 10),
-                            fifty_trees = sapply(vals_to_predict,boost_prediction,num_trees = 50))
-prediction_tibble
-```
-
-As seen in the above output, as the data are exposed to more trees, the predictions become better. 
-
-Typically the objective of a machine learning project is to produce a model that performs well on data previously unseen by the model. Before deploying the model it is wise to have an idea of well it will make predictions on data that weren't used to train it. Best practice in this case is to split available data into training, validation, and test datasets. The training dataset is used to fit the model, performance of the model at varying values of hyperparameters is evaluated using the validation dataset, and once a single is model is chosen for deployment, an estimate of model performance on previously unseen data is estimated by model performance on the test dataset. 
-
-Hyperparameter tuning and model selection is not the focus of this post, but there are glimpses of its application. The hyperparameters here are the number of trees $B$ and the value of the learning rate, $\lambda$. In this example $\lambda$ remained fixed and we iterated our model fitting over $B$ different trees. 
-
-It is generally true that model-fit metrics strictly improve when fitting and evaluating on the training dataset. This is not the case with validation datasets. At a certain point the model begins to learn the idiosyncracies of the training data, rather than a more general relationship between features and output of the data generating mechanism.
-
 ## Visualize 
 
 The boosting procedure is an iterative process, which lends itself nicely to visualization. In the model fitting code we saved the values of the loss function after every iteration, as well as the fitted values of the model. Here we'll construct a visualization of the process. 
 
-```{r}
+```{r, warning = F, message = F}
 library(ggplot2)
 library(gganimate)
 library(magick)
@@ -238,7 +221,27 @@ combined_gif
 
 ![](/home/john/johnckane.com/static/img/boosting-and-loss.gif)
 
+## Making predictions and applications to validation and test datasets
 
+To illustrate the sequential nature of making predictions, I'll generate predictions for five $X$ values, and print out the model's predictions using 5, 10, or 50 trees. Generating predictions was Step 3 in the algorithm.
+
+```{r}
+vals_to_predict <- c(5,25,35,60,99)
+prediction_tibble <- tibble(x = vals_to_predict,
+                            y = data$y[vals_to_predict + 1], # the first value of X is 0 so the index of x is x+1 
+                            five_trees = sapply(vals_to_predict,boost_prediction,num_trees = 5),
+                            ten_trees = sapply(vals_to_predict,boost_prediction,num_trees = 10),
+                            fifty_trees = sapply(vals_to_predict,boost_prediction,num_trees = 50))
+prediction_tibble
+```
+
+As seen in the above output, as the data are exposed to more trees, the predictions become better. 
+
+Typically the objective of a machine learning project is to produce a model that performs well on data previously unseen by the model. Before deploying the model it is wise to have an idea of well it will make predictions on data that weren't used to train it. Best practice in this case is to split available data into training, validation, and test datasets. The training dataset is used to fit the model, performance of the model at varying values of hyperparameters is evaluated using the validation dataset, and once a single is model is chosen for deployment, an estimate of model performance on previously unseen data is estimated by using the test dataset. 
+
+It is generally true that model fit metrics strictly improve on the training dataset as model complexity grows. This is not the case with validation datasets. There comes a point the model begins to learn the idiosyncracies of the training data rather than a more general relationship between input features and output of the data generating mechanism. The appropriate model to use in deployment would be the one that performs the best on the validation dataset, even if it is less complex and doesn't perform as well on the training dataset. 
+
+Hyperparameter tuning and model selection is not the focus of this post, but several details in this example are relevant to its application. The hyperparameters here are the number of trees ($B$), the value of the learning rate ($\lambda$), and the maximum depth of each tree (1). In this example $\lambda$ and maximum tree depth remained fixed and we iterated our model fitting over $B$ different trees. A fuller treatment would involve fitting multiple models to the training data at varying levels of $\lambda$ and maximum tree depth and comparing model performance on the validation dataset at varying levels of number of trees fit (anywhere from $1$ to $B$).
 
 ## References
 
