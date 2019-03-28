@@ -15,9 +15,9 @@ categories:
 
 ## Introduction
 
-Ensemble methods (random forests, gradient boosting machines) have proven to be a [winning strategy](https://www.kaggle.com/antgoldbloom/what-algorithms-are-most-successful-on-kaggle) on Kaggle. The building blocks of those methods are decision trees, which are generally well understood. It can seem, however, that the ensembling of many trees can produce a sort of magic that allows it to peform much better than a single tree alone. 
+Ensemble methods (random forests, gradient boosting machines) have proven to be a [winning strategy](https://www.kaggle.com/antgoldbloom/what-algorithms-are-most-successful-on-kaggle) on Kaggle. The building blocks of those methods are decision trees, which are generally well understood. It can seem, however, that the ensembling of many trees can produce a sort of magic that allows it to achieve much better performance than a single tree. 
 
-When learning about these methods the discussion moves quickly from declaring them an ensemble of trees into a discussion of hyperparameter tuning, glossing over exactly how the algorithm comes to perform well. When I was first learning the boosting algorithm I came across a [blog post](https://freakonometrics.hypotheses.org/19874]) outlining and visualizing in a regression context how boosting gradually moves predictions closer to their target. Inspired by that post, I've written up this post highlighting the boosting algorithm for classification.
+When learning about these methods the discussion moves quickly from declaring them an ensemble of trees into a discussion of hyperparameter tuning, glossing over exactly how or why boosting works so well. When I was first learning the boosting algorithm I came across a [blog post](https://freakonometrics.hypotheses.org/19874]) outlining and visualizing in a regression context how boosting gradually moves predictions closer to their target. Inspired by that post, I've written up this post highlighting the boosting algorithm for classification.
 
 Here I'll highlight the algorithm, write code to fit a model, apply it to a dataset where the output is a non-linear function of the input,visualize the boosting process and associated decrease in the loss function, and briefly discuss implications for cross-validation and model selection in a larger machine learning task. 
 
@@ -216,14 +216,7 @@ combined_gif
 
 ![](/home/john/johnckane.com/static/img/boosting-and-loss.gif)
 
-Most of the reduction in loss comes in the first several iterations. 
-
-To maximize loss reduction 
-
-16-25
-96-100
-
-
+We can see there are six distinct groupings of $X$ values in the data, with lengths 15, 10, 20, 25, 20, and 5 respectively. Most of the loss reduction occurs in the first 10 iterations even though there isn't separation of all six groups until the 22nd iteration. That appears to be the case because the last two groups to separate have a shorter length and so are "brought along" with the other values because the reduction in loss is greater for bringing along some values incorrectly rather than creating separation among all data points as quickly as possible.
 
 ## Making predictions and applications to validation and test datasets
 
@@ -239,7 +232,7 @@ prediction_tibble <- tibble(x = vals_to_predict,
 prediction_tibble
 ```
 
-As seen in the above output, as the data are exposed to more trees, the predictions become better. 
+As seen in the above output, where $y=1$ the predictions follow an upward trajectory of continuous improvement. Where $y=0$ however, there is actually a decrease in accuracy going from 5 trees to 10 before becoming more accurate by the time we reach fifty trees. This is due to the fact that all predictions start at 0, so any deviation from that would mean a decrease 
 
 Typically the objective of a machine learning project is to produce a model that performs well on data previously unseen by the model. Before deploying the model it is wise to have an idea of well it will make predictions on data that weren't used to train it. Best practice in this case is to split available data into training, validation, and test datasets. The training dataset is used to fit the model, performance of the model at varying values of hyperparameters is evaluated using the validation dataset, and once a single is model is chosen for deployment, an estimate of model performance on previously unseen data is estimated by using the test dataset. 
 
