@@ -1,0 +1,251 @@
+---
+title: "Analyze Salary Results from SO Survey"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+```
+
+
+```{r}
+survey <- read_csv("/home/john/johnckane.com/drafts/stackoverflow-2018-survey/developer_survey_2018/survey_results_public.csv")
+schema <- read_csv("/home/john/johnckane.com/drafts/stackoverflow-2018-survey/developer_survey_2018/survey_results_schema.csv")
+problems(survey)
+```
+
+```{r}
+head(survey)
+cbind(colnames(survey))
+```
+
+
+```{r}
+plot1 <- ggplot(data = survey,
+                aes(x = ConvertedSalary))
+plot1 +
+  geom_histogram()
+```
+
+```{r}
+with(survey, table(DevType))
+
+```
+
+
+## Datascience Salaries in Chicago
+```{r}
+table(survey$DevType)
+?str_split
+jobs <- str_split(survey$DevType,";")
+?str_detect
+is_ds <- str_detect(survey$DevType,"Data scientist or machine learning specialist")
+table(is_ds)
+sum(is_ds,na.rm = T)
+ds_devs <- survey[which(is_ds==TRUE),]
+table(ds_devs$Country)
+us_ds_devs <- ds_devs %>% filter(Country %in% c("United States"),
+                                 Employment == "Employed full-time",)
+```
+
+
+```{r}
+cbind(colnames(us_ds_devs))  
+
+questions <- c(
+  "DevType",
+  "OpenSource",
+  "Student",
+  "Employment",
+  "FormalEducation",
+  "UndergradMajor",
+  "CompanySize",
+  "YearsCoding",
+  "YearsCodingProf",
+  "JobSatisfaction",
+  "CareerSatisfaction",
+  "JobSearchStatus",
+  "LastNewJob",
+  "ConvertedSalary",
+  "EducationTypes",             
+  "SelfTaughtTypes",            
+  "AgreeDisagree1",             
+  "AgreeDisagree2",             
+  "AgreeDisagree3", 
+  "LanguageWorkedWith",         
+  "DatabaseWorkedWith",         
+  "PlatformWorkedWith",         
+  "FrameworkWorkedWith",        
+  "IDE",                        
+  "OperatingSystem",            
+  "NumberMonitors",             
+  "VersionControl",             
+  "CheckInCode",       
+  "WakeTime",                   
+  "HoursComputer",              
+  "HoursOutside",               
+  "SkipMeals",                  
+  "ErgonomicDevices",           
+  "Exercise",                   
+  "Gender",                     
+  "SexualOrientation",          
+  "EducationParents",           
+  "Age")                        
+
+```
+
+```{r}
+us_ds_devs_q <- us_ds_devs[,questions]
+cbind(colnames(us_ds_devs_q))
+```
+```{r}
+plot1 <- ggplot(us_ds_devs_q,
+                aes(x = ConvertedSalary))
+plot1 + 
+  geom_histogram(binwidth = 1000) +
+  geom_vline(xintercept = 100000)
+```
+
+```{r}
+summary(us_ds_devs_q$ConvertedSalary)
+```
+
+
+
+```{r}
+sum(grepl("Python",us_ds_devs_q$LanguageWorkedWith))
+980*2
+```
+
+
+```{r}
+library(psych); library(Hmisc)
+psych::describe(us_ds_devs_q, na.rm=T)
+Hmisc::describe(us_ds_devs_q)
+```
+```{r}
+with(us_ds_devs_q,prop.table(table(Exercise)))  
+
+```
+
+
+```{r}
+with(us_ds_devs_q,prop.table(table(AgreeDisagree2)))
+with(us_ds_devs_q,prop.table(table(LanguageWorkedWith)))
+```
+
+
+```{r}
+plot2 <- ggplot(data = us_ds_devs_q,
+                aes(x = Age, y = ConvertedSalary))
+plot2 +
+  geom_jitter(alpha = 0.1)
+```
+
+
+```{r}
+table(us_ds_devs_q$OpenSource)
+which(us_ds_devs_q$OpenSource == 'Nn')
+us_ds_devs_q[1578,]
+
+which(survey$OpenSource == 'Nn')
+survey[81382,]
+```
+
+
+## Parse variables
+```{r}
+ed_types <- str_split(us_ds_devs_q$EducationTypes,";")
+head(ed_types)
+max(unlist(lapply(ed_types,length)))
+
+#ed_types %>% as.data.frame()
+ed_types_df <- as.data.frame(lapply(1:9,function(i)sapply(ed_types,"[",i)))
+colnames(ed_types_df) <- paste0("ed_types",as.character(c(1:9)))
+ed_types_df
+
+```
+
+### Parse more
+
+```{r}
+#self taught types
+stt <- str_split(us_ds_devs_q$SelfTaughtTypes,";")
+max(unlist(lapply(stt,length)))
+stt_df <- as.data.frame(lapply(1:9,function(i)sapply(stt,"[",i)))
+colnames(stt_df) <- paste0("stt",as.character(c(1:9)))
+
+
+#language worked with
+lww <- str_split(us_ds_devs_q$LanguageWorkedWith,";")
+max(unlist(lapply(lww,length)))
+lww_df <- as.data.frame(lapply(1:38,function(i)sapply(lww,"[",i)))
+colnames(lww_df) <- paste0("lww",as.character(c(1:38)))
+lww_df
+
+dbww <- str_split(us_ds_devs_q$DatabaseWorkedWith,";")
+max(unlist(lapply(dbww,length)))
+dbww_df <- as.data.frame(lapply(1:21,function(i)sapply(dbww,"[",i)))
+colnames(dbww_df) <- paste0("dbww",as.character(1:21))
+
+
+pww <-str_split(us_ds_devs_q$PlatformWorkedWith,";")
+max(unlist(lapply(pww,length)))
+pww_df <- as.data.frame(lapply(1:26,function(i)sapply(pww,"[",i)))
+colnames(pww_df) <- paste0("pww",as.character(1:26))
+
+
+fww <- str_split(us_ds_devs_q$FrameworkWorkedWith,";")
+max(unlist(lapply(fww,length)))
+fww_df <- as.data.frame(lapply(1:12,function(i)sapply(fww,"[",i)))
+colnames(fww_df) <- paste0("fww",as.character(1:12))
+
+
+# append
+us_ds_devs_q <- bind_cols(us_ds_devs_q,ed_types_df,stt_df,lww_df,dbww_df,pww_df,fww_df)
+
+```
+
+
+
+
+```{r}
+us_ds <- us_ds_devs_q
+colnames(us_ds)
+save(us_ds, file="~/johnckane.com/drafts/stackoverflow-2018-survey/developer_survey_2018/us_ds.Rda")
+```
+
+
+### Analyze people who look like me
+```{r}
+cbind(colnames(us_ds_devs_q))
+```
+
+```{r}
+with(us_ds_devs_q,table(Employment))
+with(us_ds_devs_q,table(YearsCodingProf))
+```
+
+
+```{r}
+me <- us_ds_devs_q %>%
+    filter(Employment == "Employed full-time",
+           YearsCodingProf == "6-8 years") 
+Hmisc::describe(me)
+
+
+with(me,table(FormalEducation))
+with(me,table(UndergradMajor))
+with(me,table(EducationParents))
+```
+
+
+
+
+```{r}
+colnames(us_ds_devs_q)
+```
+
+
+```{r}
+```

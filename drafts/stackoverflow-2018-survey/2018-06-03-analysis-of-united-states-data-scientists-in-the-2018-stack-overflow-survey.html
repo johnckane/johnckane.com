@@ -1,0 +1,296 @@
+---
+title: "Analysis of United States Data Scientists in the 2018 Stack Overflow Survey"
+author: "John Kane"
+date: '2018-06-03'
+slug: analysis-of-united-states-data-scientists-in-the-2018-stack-overflow-survey
+tags:
+- career
+- stackoverflow
+categories:
+- career
+- stackoverflow
+---
+
+
+
+<pre class="r"><code>library(tidyverse)</code></pre>
+<pre><code>## ── Attaching packages ───────────────────────────────────────────────────────────────────────────────────────────── tidyverse 1.2.1 ──</code></pre>
+<pre><code>## ✔ ggplot2 3.1.0       ✔ purrr   0.3.1  
+## ✔ tibble  2.0.1       ✔ dplyr   0.8.0.1
+## ✔ tidyr   0.8.3       ✔ stringr 1.4.0  
+## ✔ readr   1.3.1       ✔ forcats 0.4.0</code></pre>
+<pre><code>## ── Conflicts ──────────────────────────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
+## ✖ dplyr::filter() masks stats::filter()
+## ✖ dplyr::lag()    masks stats::lag()</code></pre>
+<pre class="r"><code>load(&quot;/home/john/johnckane.com/drafts/stackoverflow-2018-survey/developer_survey_2018/us_ds.Rda&quot;)
+#colnames(us_ds)</code></pre>
+<p>This is an analysis of the <a href="link">2018 Stack Overflow Survey</a>.</p>
+<p>This is limited to those identifying as a “Data scientist or machine learning specialist,” living in the United States, and employed full-time.</p>
+<p>I am a data scientist and participated in the survey. I hoped to see how I compared to my peers with respect to questions of interest to me that relate to career and lifestyle.</p>
+<p>As a companion to this post I’ve created Shiny Application that allows users to input their own responses (no data is saved) to see how they compare to other data scientists in the United States.</p>
+<p>There is a lot more information in the SO Survey and I encourage you to check it out. This analysis reflects the questions that were of most interest to me this week.</p>
+<p>Jump to:</p>
+<p>Background Toolkit Current Job and Career (including salary) Lifestyle Imposter Syndrome</p>
+<pre class="r"><code>plot_func &lt;- function(data,variable,other,title, offset = 0.05){
+
+  func_df &lt;- data
+ 
+  if(other == TRUE){
+    lt1_names &lt;- names(which(prop.table(table(func_df[[variable]])) &lt; .01)) 
+    lt1_names_index &lt;- which(func_df[[variable]] %in% lt1_names)
+    func_df[lt1_names_index,variable] &lt;- &quot;Other&quot;
+  }
+  
+  
+  na_index &lt;- which(is.na(func_df[[variable]]))
+  func_df[na_index,variable] &lt;- &quot;NA&quot;
+  var_levels &lt;- names(table(func_df[[variable]]))[order(table(func_df[[variable]]))]
+
+  func_df &lt;- func_df %&gt;%
+    mutate(factor_var = factor(eval(parse(text=variable)), levels = var_levels)) %&gt;%
+    group_by(factor_var) %&gt;%
+    summarise(total_level = n()) %&gt;%
+    mutate(dummy = 1) %&gt;%
+    inner_join(func_df %&gt;%
+                 summarise(total = n()) %&gt;%
+                 mutate(dummy = 1),
+               by = &quot;dummy&quot;) %&gt;%
+    mutate(pct = total_level/total)
+
+  ggplot(data = func_df,
+         aes(x = factor_var,
+             y = pct)) +
+    geom_bar(stat = &quot;identity&quot;,fill = &quot;white&quot;,color = &quot;darkgreen&quot;) +
+    coord_flip() +
+    theme_minimal() +
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+    scale_x_discrete(&quot;&quot;) +
+    ggtitle(title) +
+    geom_text(aes(x = factor_var, y = pct + offset,
+                  label = paste0(round(100*round(pct,2)),&quot;%&quot;))) +
+    scale_y_continuous(&quot;&quot;,
+                        breaks = NULL,
+                        labels = NULL)
+}</code></pre>
+<div id="background" class="section level2">
+<h2>Background</h2>
+<pre class="r"><code>plot_func(data = us_ds, variable = &quot;Age&quot;, other = FALSE, title = &quot;Age&quot;, offset = 0.02)</code></pre>
+<p><img src="/post/2018-06-03-analysis-of-united-states-data-scientists-in-the-2018-stack-overflow-survey_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<pre class="r"><code>plot_func(data = us_ds, variable = &quot;Gender&quot;, other = TRUE, title = &quot;Gender&quot;)</code></pre>
+<p><img src="/post/2018-06-03-analysis-of-united-states-data-scientists-in-the-2018-stack-overflow-survey_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<pre class="r"><code>plot_func(data = us_ds, variable = &quot;EducationParents&quot;, other = TRUE, title = &quot;Parent&#39;s Education&quot;)</code></pre>
+<p><img src="/post/2018-06-03-analysis-of-united-states-data-scientists-in-the-2018-stack-overflow-survey_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<pre class="r"><code>plot_func(us_ds,&quot;FormalEducation&quot;,other = TRUE, title = &quot;Formal Education&quot;)</code></pre>
+<p><img src="/post/2018-06-03-analysis-of-united-states-data-scientists-in-the-2018-stack-overflow-survey_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<pre class="r"><code>plot_func(us_ds,&quot;UndergradMajor&quot;,TRUE,title = &quot;Undergraduate Major&quot;, offset = 0.03)</code></pre>
+<p><img src="/post/2018-06-03-analysis-of-united-states-data-scientists-in-the-2018-stack-overflow-survey_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<pre class="r"><code>plot_func(us_ds,&quot;YearsCodingProf&quot;,other = TRUE,title =&quot;Years Coding Profesionally&quot;, offset = 0.02)</code></pre>
+<p><img src="/post/2018-06-03-analysis-of-united-states-data-scientists-in-the-2018-stack-overflow-survey_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+</div>
+<div id="toolkit" class="section level2">
+<h2>Toolkit</h2>
+<pre class="r"><code>plot_func2 &lt;- function(data,variable,other,sample_size,title,offset = 0.05){
+
+  func_df &lt;- data
+ 
+  if(other == TRUE){
+    lt1_names &lt;- names(which(table(func_df[[variable]])/sample_size &lt; .01)) 
+    lt1_names_index &lt;- which(func_df[[variable]] %in% lt1_names)
+    func_df[lt1_names_index,variable] &lt;- &quot;Other&quot;
+  }
+  
+  
+  na_index &lt;- which(is.na(func_df[[variable]]))
+  func_df[na_index,variable] &lt;- &quot;NA&quot;
+  var_levels &lt;- names(table(func_df[[variable]]))[order(table(func_df[[variable]]))]
+
+  func_df &lt;- func_df %&gt;%
+    mutate(factor_var = factor(eval(parse(text=variable)), levels = var_levels)) %&gt;%
+    group_by(factor_var) %&gt;%
+    summarise(total_level = n()) %&gt;%
+    mutate(pct = total_level/sample_size)
+
+  ggplot(data = func_df,
+         aes(x = factor_var,
+             y = pct)) +
+    geom_bar(stat = &quot;identity&quot;,fill = &quot;white&quot;,color = &quot;darkgreen&quot;) +
+    coord_flip() +
+    theme_minimal() +
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+    scale_x_discrete(&quot;&quot;) +
+    ggtitle(title) +
+    geom_text(aes(x = factor_var, y = pct + offset,
+                  label = paste0(round(100*round(pct,2)),&quot;%&quot;))) +
+    scale_y_continuous(&quot;&quot;,
+                        breaks = NULL,
+                        labels = NULL)
+}</code></pre>
+</div>
+<div id="what-else-do-data-scientists-do" class="section level1">
+<h1>What else do data scientists do?</h1>
+<pre class="r"><code>dt &lt;- str_split(us_ds$DevType,&quot;;&quot;) %&gt;% unlist() %&gt;% unname()
+dt &lt;- dt[!(is.na(dt) | dt==&quot;Data scientist or machine learning specialist&quot;)] 
+dt_df &lt;- data.frame(devtype = dt, stringsAsFactors = FALSE)
+plot_func2(dt_df, &quot;devtype&quot;, other = TRUE, sample_size = sum(!is.na(us_ds$DevType)), title = &quot;Developer Type (besides Data Scientist)&quot;)</code></pre>
+<p><img src="/post/2018-06-03-analysis-of-united-states-data-scientists-in-the-2018-stack-overflow-survey_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+<pre class="r"><code>lww &lt;- str_split(us_ds$LanguageWorkedWith,&quot;;&quot;)
+lww &lt;- lww[!is.na(lww)] %&gt;% unlist() %&gt;% unname()
+lww_df &lt;- data.frame(Language = lww, stringsAsFactors = FALSE)
+plot_func2(lww_df, &quot;Language&quot;, other = TRUE, sample_size = sum(!is.na(us_ds$LanguageWorkedWith)), title = &quot;Coding Languages&quot;)</code></pre>
+<p><img src="/post/2018-06-03-analysis-of-united-states-data-scientists-in-the-2018-stack-overflow-survey_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<pre class="r"><code>et &lt;- str_split(us_ds$EducationTypes,&quot;;&quot;)
+et &lt;- et[!is.na(et)] %&gt;% unlist() %&gt;% unname()
+et_df &lt;- data.frame(EdType = et, stringsAsFactors = FALSE)
+plot_func2(et_df,&quot;EdType&quot;,other = TRUE, sample_size = sum(!is.na(us_ds$EducationTypes)), title = &quot;Education Types&quot;, offset = 0.1)</code></pre>
+<p><img src="/post/2018-06-03-analysis-of-united-states-data-scientists-in-the-2018-stack-overflow-survey_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<pre class="r"><code>dbww &lt;- str_split(us_ds$DatabaseWorkedWith,&quot;;&quot;)
+dbww &lt;- dbww[!is.na(dbww)] %&gt;% unlist() %&gt;% unname()
+dbww_df &lt;- data.frame(Database = dbww, stringsAsFactors = FALSE)
+plot_func2(dbww_df,&quot;Database&quot;,other=TRUE,sample_size = sum(!is.na(us_ds$DatabaseWorkedWith)), title = &quot;Databases&quot;)</code></pre>
+<p><img src="/post/2018-06-03-analysis-of-united-states-data-scientists-in-the-2018-stack-overflow-survey_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+<pre class="r"><code>pww &lt;- str_split(us_ds$PlatformWorkedWith,&quot;;&quot;)
+pww &lt;- pww[!is.na(pww)] %&gt;% unlist() %&gt;% unname()
+pww_df &lt;- data.frame(Platform = pww, stringsAsFactors = FALSE)
+plot_func2(pww_df, &quot;Platform&quot;,other=TRUE,sample_size = sum(!is.na(us_ds$PlatformWorkedWith)), title = &quot;Platforms&quot;, offset = 0.03)</code></pre>
+<p><img src="/post/2018-06-03-analysis-of-united-states-data-scientists-in-the-2018-stack-overflow-survey_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
+<pre class="r"><code>fww &lt;- str_split(us_ds$FrameworkWorkedWith,&quot;;&quot;)
+fww &lt;- fww[!is.na(fww)] %&gt;% unlist() %&gt;% unname()
+fww_df &lt;- data.frame(Framework = fww, stringsAsFactors = FALSE)
+plot_func2(fww_df, &quot;Framework&quot;,other=TRUE,sample_size = sum(!is.na(us_ds$FrameworkWorkedWith)), title = &quot;Frameworks&quot;, offset = 0.02)</code></pre>
+<p><img src="/post/2018-06-03-analysis-of-united-states-data-scientists-in-the-2018-stack-overflow-survey_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
+<pre class="r"><code>ide &lt;- str_split(us_ds$IDE,&quot;;&quot;)
+ide &lt;- ide[!is.na(ide)] %&gt;% unlist() %&gt;% unname()
+ide_df &lt;- data.frame(IDE = ide, stringsAsFactors = FALSE)
+plot_func2(ide_df, &quot;IDE&quot;, other = TRUE, sample_size = sum(!is.na(us_ds$IDE)), title = &quot;IDE&quot;, offset = 0.02)</code></pre>
+<p><img src="/post/2018-06-03-analysis-of-united-states-data-scientists-in-the-2018-stack-overflow-survey_files/figure-html/unnamed-chunk-16-1.png" width="672" /></p>
+<pre class="r"><code>os &lt;- str_split(us_ds$OperatingSystem,&quot;;&quot;)
+os &lt;- os[!is.na(os)] %&gt;% unlist() %&gt;% unname()
+os_df &lt;- data.frame(OS = os, stringsAsFactors = FALSE)
+plot_func2(os_df, &quot;OS&quot;, other = TRUE, sample_size = sum(!is.na(us_ds$OperatingSystem)), title = &quot;OS&quot;, offset = 0.02)</code></pre>
+<p><img src="/post/2018-06-03-analysis-of-united-states-data-scientists-in-the-2018-stack-overflow-survey_files/figure-html/unnamed-chunk-17-1.png" width="672" /></p>
+<pre class="r"><code>nm &lt;- str_split(us_ds$NumberMonitors, &quot;;&quot;)
+nm &lt;- nm[!is.na(nm)] %&gt;% unlist() %&gt;% unname()
+nm_df &lt;- data.frame(NM = nm, stringsAsFactors = FALSE)
+plot_func2(nm_df, &quot;NM&quot;, other = TRUE, sample_size = sum(!is.na(us_ds$NumberMonitors)), title = &quot;Number of Monitors&quot;)</code></pre>
+<p><img src="/post/2018-06-03-analysis-of-united-states-data-scientists-in-the-2018-stack-overflow-survey_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
+<pre class="r"><code>vc &lt;- str_split(us_ds$VersionControl, &quot;;&quot;)
+vc &lt;- vc[!is.na(vc)] %&gt;% unlist() %&gt;% unname()
+vc_df &lt;- data.frame(VC = vc, stringsAsFactors = FALSE)
+plot_func2(vc_df, &quot;VC&quot;, other = TRUE, sample_size = sum(!is.na(us_ds$VersionControl)), title = &quot;Version Control&quot;)</code></pre>
+<p><img src="/post/2018-06-03-analysis-of-united-states-data-scientists-in-the-2018-stack-overflow-survey_files/figure-html/unnamed-chunk-19-1.png" width="672" /></p>
+<div id="current-job" class="section level2">
+<h2>Current Job</h2>
+<pre class="r"><code>plot_func(us_ds,&quot;CompanySize&quot;,TRUE,title = &quot;CompanySize&quot;)</code></pre>
+<p><img src="/post/2018-06-03-analysis-of-united-states-data-scientists-in-the-2018-stack-overflow-survey_files/figure-html/unnamed-chunk-20-1.png" width="672" /></p>
+<pre class="r"><code>plot_func(us_ds, &quot;CompanySize&quot;, TRUE, title = &quot;Company Size&quot;, offset = 0.02)</code></pre>
+<p><img src="/post/2018-06-03-analysis-of-united-states-data-scientists-in-the-2018-stack-overflow-survey_files/figure-html/unnamed-chunk-21-1.png" width="672" /></p>
+<pre class="r"><code>plot_func(us_ds, &quot;JobSatisfaction&quot;,TRUE,&quot;Job Satisfaction&quot;, offset = 0.02)</code></pre>
+<p><img src="/post/2018-06-03-analysis-of-united-states-data-scientists-in-the-2018-stack-overflow-survey_files/figure-html/unnamed-chunk-22-1.png" width="672" /></p>
+<pre class="r"><code>plot_func(us_ds,&quot;JobSearchStatus&quot;,TRUE,title = &quot;Job Search Status&quot;)</code></pre>
+<p><img src="/post/2018-06-03-analysis-of-united-states-data-scientists-in-the-2018-stack-overflow-survey_files/figure-html/unnamed-chunk-23-1.png" width="672" /></p>
+<pre class="r"><code>plot_func(us_ds,&quot;LastNewJob&quot;,TRUE,&quot;Last New Job&quot;)</code></pre>
+<p><img src="/post/2018-06-03-analysis-of-united-states-data-scientists-in-the-2018-stack-overflow-survey_files/figure-html/unnamed-chunk-24-1.png" width="672" /></p>
+<pre class="r"><code>plot_func(us_ds,&quot;CareerSatisfaction&quot;,TRUE,title = &quot;Career Satisfaction&quot;, offset = 0.02)</code></pre>
+<p><img src="/post/2018-06-03-analysis-of-united-states-data-scientists-in-the-2018-stack-overflow-survey_files/figure-html/unnamed-chunk-25-1.png" width="672" /></p>
+<pre class="r"><code>ggplot(data = us_ds %&gt;% filter(!is.na(us_ds$ConvertedSalary)),
+       aes(x = ConvertedSalary)) +
+  geom_histogram(binwidth = 5000, color = &quot;darkgreen&quot;) +
+  ggtitle(&quot;Salary&quot;, subtitle = paste0(as.character(sum(!is.na(us_ds$ConvertedSalary))), &quot; Respondents&quot;)) +
+  theme_minimal() +
+  NULL</code></pre>
+<p><img src="/post/2018-06-03-analysis-of-united-states-data-scientists-in-the-2018-stack-overflow-survey_files/figure-html/unnamed-chunk-26-1.png" width="672" /></p>
+<pre class="r"><code>ggplot(data = us_ds %&gt;% filter(!is.na(ConvertedSalary),
+                               ConvertedSalary &lt; 500000),
+       aes(x = ConvertedSalary)) +
+  geom_histogram(binwidth = 5000, color = &quot;darkgreen&quot;) +
+  ggtitle(&quot;Salary&quot;, subtitle = paste0(as.character(sum(!is.na(us_ds$ConvertedSalary))), &quot; Respondents&quot;)) +
+  theme_minimal() +
+  scale_x_continuous(breaks = seq(from = 0,to=500000,by=25000),
+                     labels = paste0(&quot;$&quot;,seq(from = 0,to=500,by=25),&quot;k&quot;)) +
+  NULL</code></pre>
+<p><img src="/post/2018-06-03-analysis-of-united-states-data-scientists-in-the-2018-stack-overflow-survey_files/figure-html/unnamed-chunk-27-1.png" width="672" /></p>
+<pre class="r"><code>summary(us_ds$ConvertedSalary)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA&#39;s 
+##       0   80000  105738  158717  145000 2000000     364</code></pre>
+</div>
+<div id="lifestyle" class="section level2">
+<h2>Lifestyle</h2>
+<pre class="r"><code>plot_func(us_ds,&quot;WakeTime&quot;,TRUE,title=&quot;On days when you work, what time do you typically wake up?&quot;)</code></pre>
+<p><img src="/post/2018-06-03-analysis-of-united-states-data-scientists-in-the-2018-stack-overflow-survey_files/figure-html/unnamed-chunk-29-1.png" width="672" /></p>
+<div id="on-a-typical-day" class="section level3">
+<h3>On a typical day…</h3>
+<pre class="r"><code>plot_func(us_ds,&quot;HoursComputer&quot;,TRUE,title = &quot;How much time do you spend on a desktop or laptop computer?&quot;)</code></pre>
+<p><img src="/post/2018-06-03-analysis-of-united-states-data-scientists-in-the-2018-stack-overflow-survey_files/figure-html/unnamed-chunk-30-1.png" width="672" /></p>
+<pre class="r"><code>plot_func(us_ds,&quot;HoursOutside&quot;,TRUE,title=&quot;How much time do you spend outside?&quot;)</code></pre>
+<p><img src="/post/2018-06-03-analysis-of-united-states-data-scientists-in-the-2018-stack-overflow-survey_files/figure-html/unnamed-chunk-31-1.png" width="672" /></p>
+</div>
+<div id="in-a-typical-week" class="section level3">
+<h3>In a typical week…</h3>
+<pre class="r"><code>plot_func(us_ds,&quot;Exercise&quot;,TRUE, title = &quot;How many times do you exercise?&quot;)</code></pre>
+<p><img src="/post/2018-06-03-analysis-of-united-states-data-scientists-in-the-2018-stack-overflow-survey_files/figure-html/unnamed-chunk-32-1.png" width="672" /></p>
+<pre class="r"><code>plot_func(us_ds,&quot;SkipMeals&quot;,TRUE,title=&quot;How many times do you skip a meal in order to be more productive?&quot;)</code></pre>
+<p><img src="/post/2018-06-03-analysis-of-united-states-data-scientists-in-the-2018-stack-overflow-survey_files/figure-html/unnamed-chunk-33-1.png" width="672" /></p>
+</div>
+</div>
+<div id="community" class="section level2">
+<h2>Community</h2>
+<p>Three questions in the survey I think can be interpreted as measuring the phenomenon known as <a href="https://en.wikipedia.org/wiki/Impostor_syndrome">Imposter Syndrome</a>.</p>
+<pre class="r"><code>plot_func</code></pre>
+<pre><code>## function(data,variable,other,title, offset = 0.05){
+## 
+##   func_df &lt;- data
+##  
+##   if(other == TRUE){
+##     lt1_names &lt;- names(which(prop.table(table(func_df[[variable]])) &lt; .01)) 
+##     lt1_names_index &lt;- which(func_df[[variable]] %in% lt1_names)
+##     func_df[lt1_names_index,variable] &lt;- &quot;Other&quot;
+##   }
+##   
+##   
+##   na_index &lt;- which(is.na(func_df[[variable]]))
+##   func_df[na_index,variable] &lt;- &quot;NA&quot;
+##   var_levels &lt;- names(table(func_df[[variable]]))[order(table(func_df[[variable]]))]
+## 
+##   func_df &lt;- func_df %&gt;%
+##     mutate(factor_var = factor(eval(parse(text=variable)), levels = var_levels)) %&gt;%
+##     group_by(factor_var) %&gt;%
+##     summarise(total_level = n()) %&gt;%
+##     mutate(dummy = 1) %&gt;%
+##     inner_join(func_df %&gt;%
+##                  summarise(total = n()) %&gt;%
+##                  mutate(dummy = 1),
+##                by = &quot;dummy&quot;) %&gt;%
+##     mutate(pct = total_level/total)
+## 
+##   ggplot(data = func_df,
+##          aes(x = factor_var,
+##              y = pct)) +
+##     geom_bar(stat = &quot;identity&quot;,fill = &quot;white&quot;,color = &quot;darkgreen&quot;) +
+##     coord_flip() +
+##     theme_minimal() +
+##     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+##     scale_x_discrete(&quot;&quot;) +
+##     ggtitle(title) +
+##     geom_text(aes(x = factor_var, y = pct + offset,
+##                   label = paste0(round(100*round(pct,2)),&quot;%&quot;))) +
+##     scale_y_continuous(&quot;&quot;,
+##                         breaks = NULL,
+##                         labels = NULL)
+## }
+## &lt;bytecode: 0x562f40f6ed40&gt;</code></pre>
+<pre class="r"><code>plot_func(us_ds,&quot;AgreeDisagree1&quot;,other = FALSE, title =  &quot;I feel a sense of kinship or connection to other developers&quot;)</code></pre>
+<p><img src="/post/2018-06-03-analysis-of-united-states-data-scientists-in-the-2018-stack-overflow-survey_files/figure-html/unnamed-chunk-34-1.png" width="672" /></p>
+<blockquote>
+<p>I think of myself as competing with my peers</p>
+</blockquote>
+<pre class="r"><code>plot_func(us_ds,&quot;AgreeDisagree2&quot;,other = FALSE, title =  &quot;I think of myself as competing with my peers&quot;)</code></pre>
+<p><img src="/post/2018-06-03-analysis-of-united-states-data-scientists-in-the-2018-stack-overflow-survey_files/figure-html/unnamed-chunk-35-1.png" width="672" /></p>
+<blockquote>
+<p>I’m not as good at programming as most of my peers</p>
+</blockquote>
+<pre class="r"><code>plot_func(us_ds,&quot;AgreeDisagree2&quot;,other = FALSE, title =  &quot;I&#39;m not as good at programming as most of my peers&quot;)</code></pre>
+<p><img src="/post/2018-06-03-analysis-of-united-states-data-scientists-in-the-2018-stack-overflow-survey_files/figure-html/unnamed-chunk-36-1.png" width="672" /></p>
+<pre class="r"><code>(100-16)/5</code></pre>
+<pre><code>## [1] 16.8</code></pre>
+</div>
+</div>

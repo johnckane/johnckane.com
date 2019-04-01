@@ -1,0 +1,355 @@
+---
+title: "Analysis of United States Data Scientists in the 2018 Stack Overflow Survey"
+author: "John Kane"
+date: '2018-06-03'
+slug: analysis-of-united-states-data-scientists-in-the-2018-stack-overflow-survey
+tags:
+- career
+- stackoverflow
+categories:
+- career
+- stackoverflow
+---
+
+
+```{r}
+library(tidyverse)
+load("/home/john/johnckane.com/drafts/stackoverflow-2018-survey/developer_survey_2018/us_ds.Rda")
+#colnames(us_ds)
+```
+
+This is an analysis of the [2018 Stack Overflow Survey](link). 
+
+This is limited to those identifying as a "Data scientist or machine learning specialist," living in the United States, and employed full-time.
+
+I am a data scientist and participated in the survey. I hoped to see how I compared to my peers with respect to questions of interest to me that relate to career and lifestyle.
+
+As a companion to this post I've created Shiny Application that allows users to input their own responses (no data is saved) to see how they compare to
+other data scientists in the United States.
+
+
+There is a lot more information in the SO Survey and I encourage you to check it out. This analysis reflects the questions that were of most interest to me this week.
+
+
+Jump to:
+
+Background
+Toolkit
+Current Job and Career (including salary)
+Lifestyle
+Imposter Syndrome
+
+```{r}
+plot_func <- function(data,variable,other,title, offset = 0.05){
+
+  func_df <- data
+ 
+  if(other == TRUE){
+    lt1_names <- names(which(prop.table(table(func_df[[variable]])) < .01)) 
+    lt1_names_index <- which(func_df[[variable]] %in% lt1_names)
+    func_df[lt1_names_index,variable] <- "Other"
+  }
+  
+  
+  na_index <- which(is.na(func_df[[variable]]))
+  func_df[na_index,variable] <- "NA"
+  var_levels <- names(table(func_df[[variable]]))[order(table(func_df[[variable]]))]
+
+  func_df <- func_df %>%
+    mutate(factor_var = factor(eval(parse(text=variable)), levels = var_levels)) %>%
+    group_by(factor_var) %>%
+    summarise(total_level = n()) %>%
+    mutate(dummy = 1) %>%
+    inner_join(func_df %>%
+                 summarise(total = n()) %>%
+                 mutate(dummy = 1),
+               by = "dummy") %>%
+    mutate(pct = total_level/total)
+
+  ggplot(data = func_df,
+         aes(x = factor_var,
+             y = pct)) +
+    geom_bar(stat = "identity",fill = "white",color = "darkgreen") +
+    coord_flip() +
+    theme_minimal() +
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+    scale_x_discrete("") +
+    ggtitle(title) +
+    geom_text(aes(x = factor_var, y = pct + offset,
+                  label = paste0(round(100*round(pct,2)),"%"))) +
+    scale_y_continuous("",
+                        breaks = NULL,
+                        labels = NULL)
+}
+```
+
+
+## Background
+
+```{r,warning=FALSE}
+plot_func(data = us_ds, variable = "Age", other = FALSE, title = "Age", offset = 0.02)
+```
+
+```{r}
+plot_func(data = us_ds, variable = "Gender", other = TRUE, title = "Gender")
+```
+
+```{r}
+plot_func(data = us_ds, variable = "EducationParents", other = TRUE, title = "Parent's Education")
+```
+
+
+```{r}
+plot_func(us_ds,"FormalEducation",other = TRUE, title = "Formal Education")
+```
+
+
+```{r}
+plot_func(us_ds,"UndergradMajor",TRUE,title = "Undergraduate Major", offset = 0.03)
+```
+
+
+```{r}
+plot_func(us_ds,"YearsCodingProf",other = TRUE,title ="Years Coding Profesionally", offset = 0.02)
+```
+
+
+## Toolkit
+
+```{r}
+plot_func2 <- function(data,variable,other,sample_size,title,offset = 0.05){
+
+  func_df <- data
+ 
+  if(other == TRUE){
+    lt1_names <- names(which(table(func_df[[variable]])/sample_size < .01)) 
+    lt1_names_index <- which(func_df[[variable]] %in% lt1_names)
+    func_df[lt1_names_index,variable] <- "Other"
+  }
+  
+  
+  na_index <- which(is.na(func_df[[variable]]))
+  func_df[na_index,variable] <- "NA"
+  var_levels <- names(table(func_df[[variable]]))[order(table(func_df[[variable]]))]
+
+  func_df <- func_df %>%
+    mutate(factor_var = factor(eval(parse(text=variable)), levels = var_levels)) %>%
+    group_by(factor_var) %>%
+    summarise(total_level = n()) %>%
+    mutate(pct = total_level/sample_size)
+
+  ggplot(data = func_df,
+         aes(x = factor_var,
+             y = pct)) +
+    geom_bar(stat = "identity",fill = "white",color = "darkgreen") +
+    coord_flip() +
+    theme_minimal() +
+    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+    scale_x_discrete("") +
+    ggtitle(title) +
+    geom_text(aes(x = factor_var, y = pct + offset,
+                  label = paste0(round(100*round(pct,2)),"%"))) +
+    scale_y_continuous("",
+                        breaks = NULL,
+                        labels = NULL)
+}
+
+```
+
+# What else do data scientists do?
+
+```{r}
+dt <- str_split(us_ds$DevType,";") %>% unlist() %>% unname()
+dt <- dt[!(is.na(dt) | dt=="Data scientist or machine learning specialist")] 
+dt_df <- data.frame(devtype = dt, stringsAsFactors = FALSE)
+plot_func2(dt_df, "devtype", other = TRUE, sample_size = sum(!is.na(us_ds$DevType)), title = "Developer Type (besides Data Scientist)")
+```
+
+
+
+
+       
+       
+       
+       
+       
+       
+```{r}
+lww <- str_split(us_ds$LanguageWorkedWith,";")
+lww <- lww[!is.na(lww)] %>% unlist() %>% unname()
+lww_df <- data.frame(Language = lww, stringsAsFactors = FALSE)
+plot_func2(lww_df, "Language", other = TRUE, sample_size = sum(!is.na(us_ds$LanguageWorkedWith)), title = "Coding Languages")
+```
+       
+       
+```{r}
+et <- str_split(us_ds$EducationTypes,";")
+et <- et[!is.na(et)] %>% unlist() %>% unname()
+et_df <- data.frame(EdType = et, stringsAsFactors = FALSE)
+plot_func2(et_df,"EdType",other = TRUE, sample_size = sum(!is.na(us_ds$EducationTypes)), title = "Education Types", offset = 0.1)
+```
+       
+       
+```{r}
+dbww <- str_split(us_ds$DatabaseWorkedWith,";")
+dbww <- dbww[!is.na(dbww)] %>% unlist() %>% unname()
+dbww_df <- data.frame(Database = dbww, stringsAsFactors = FALSE)
+plot_func2(dbww_df,"Database",other=TRUE,sample_size = sum(!is.na(us_ds$DatabaseWorkedWith)), title = "Databases")
+```
+       
+```{r}
+pww <- str_split(us_ds$PlatformWorkedWith,";")
+pww <- pww[!is.na(pww)] %>% unlist() %>% unname()
+pww_df <- data.frame(Platform = pww, stringsAsFactors = FALSE)
+plot_func2(pww_df, "Platform",other=TRUE,sample_size = sum(!is.na(us_ds$PlatformWorkedWith)), title = "Platforms", offset = 0.03)
+```
+       
+       
+```{r}
+fww <- str_split(us_ds$FrameworkWorkedWith,";")
+fww <- fww[!is.na(fww)] %>% unlist() %>% unname()
+fww_df <- data.frame(Framework = fww, stringsAsFactors = FALSE)
+plot_func2(fww_df, "Framework",other=TRUE,sample_size = sum(!is.na(us_ds$FrameworkWorkedWith)), title = "Frameworks", offset = 0.02)
+```
+
+```{r}
+ide <- str_split(us_ds$IDE,";")
+ide <- ide[!is.na(ide)] %>% unlist() %>% unname()
+ide_df <- data.frame(IDE = ide, stringsAsFactors = FALSE)
+plot_func2(ide_df, "IDE", other = TRUE, sample_size = sum(!is.na(us_ds$IDE)), title = "IDE", offset = 0.02)
+```
+       
+```{r}
+os <- str_split(us_ds$OperatingSystem,";")
+os <- os[!is.na(os)] %>% unlist() %>% unname()
+os_df <- data.frame(OS = os, stringsAsFactors = FALSE)
+plot_func2(os_df, "OS", other = TRUE, sample_size = sum(!is.na(us_ds$OperatingSystem)), title = "OS", offset = 0.02)
+```
+
+```{r}
+nm <- str_split(us_ds$NumberMonitors, ";")
+nm <- nm[!is.na(nm)] %>% unlist() %>% unname()
+nm_df <- data.frame(NM = nm, stringsAsFactors = FALSE)
+plot_func2(nm_df, "NM", other = TRUE, sample_size = sum(!is.na(us_ds$NumberMonitors)), title = "Number of Monitors")
+```
+
+```{r}
+vc <- str_split(us_ds$VersionControl, ";")
+vc <- vc[!is.na(vc)] %>% unlist() %>% unname()
+vc_df <- data.frame(VC = vc, stringsAsFactors = FALSE)
+plot_func2(vc_df, "VC", other = TRUE, sample_size = sum(!is.na(us_ds$VersionControl)), title = "Version Control")
+
+```
+
+
+
+## Current Job
+
+```{r}
+plot_func(us_ds,"CompanySize",TRUE,title = "CompanySize")
+```
+
+```{r}
+plot_func(us_ds, "CompanySize", TRUE, title = "Company Size", offset = 0.02)
+```
+
+```{r}
+plot_func(us_ds, "JobSatisfaction",TRUE,"Job Satisfaction", offset = 0.02)
+```
+
+```{r}
+plot_func(us_ds,"JobSearchStatus",TRUE,title = "Job Search Status")
+```
+
+```{r}
+plot_func(us_ds,"LastNewJob",TRUE,"Last New Job")
+```
+
+```{r}
+plot_func(us_ds,"CareerSatisfaction",TRUE,title = "Career Satisfaction", offset = 0.02)
+```
+
+
+```{r}
+ggplot(data = us_ds %>% filter(!is.na(us_ds$ConvertedSalary)),
+       aes(x = ConvertedSalary)) +
+  geom_histogram(binwidth = 5000, color = "darkgreen") +
+  ggtitle("Salary", subtitle = paste0(as.character(sum(!is.na(us_ds$ConvertedSalary))), " Respondents")) +
+  theme_minimal() +
+  NULL
+```
+
+```{r}
+ggplot(data = us_ds %>% filter(!is.na(ConvertedSalary),
+                               ConvertedSalary < 500000),
+       aes(x = ConvertedSalary)) +
+  geom_histogram(binwidth = 5000, color = "darkgreen") +
+  ggtitle("Salary", subtitle = paste0(as.character(sum(!is.na(us_ds$ConvertedSalary))), " Respondents")) +
+  theme_minimal() +
+  scale_x_continuous(breaks = seq(from = 0,to=500000,by=25000),
+                     labels = paste0("$",seq(from = 0,to=500,by=25),"k")) +
+  NULL
+```
+
+```{r}
+summary(us_ds$ConvertedSalary)
+```
+
+
+## Lifestyle
+```{r}
+plot_func(us_ds,"WakeTime",TRUE,title="On days when you work, what time do you typically wake up?")
+```
+
+### On a typical day...
+
+```{r}
+plot_func(us_ds,"HoursComputer",TRUE,title = "How much time do you spend on a desktop or laptop computer?")
+```
+
+```{r}
+plot_func(us_ds,"HoursOutside",TRUE,title="How much time do you spend outside?")
+```
+
+### In a typical week...
+
+```{r}
+plot_func(us_ds,"Exercise",TRUE, title = "How many times do you exercise?")
+```
+
+
+```{r}
+plot_func(us_ds,"SkipMeals",TRUE,title="How many times do you skip a meal in order to be more productive?")
+```
+
+## Community
+
+Three questions in the survey I think can be interpreted as measuring the phenomenon known as [Imposter Syndrome](https://en.wikipedia.org/wiki/Impostor_syndrome). 
+
+```{r}
+plot_func
+plot_func(us_ds,"AgreeDisagree1",other = FALSE, title =  "I feel a sense of kinship or connection to other developers")
+```
+
+
+> I think of myself as competing with my peers
+
+```{r}
+plot_func(us_ds,"AgreeDisagree2",other = FALSE, title =  "I think of myself as competing with my peers")
+```
+
+> I'm not as good at programming as most of my peers
+
+```{r}
+plot_func(us_ds,"AgreeDisagree2",other = FALSE, title =  "I'm not as good at programming as most of my peers")
+```
+
+
+
+```{r}
+(100-16)/5
+```
+
+
+
+

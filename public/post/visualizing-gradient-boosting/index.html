@@ -9,37 +9,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="referrer" content="no-referrer">
 <meta name="author" content="John C. Kane">
-<meta name="description" content="knitr::opts_chunk$get(&#39;fig.path&#39;) ## [1] &quot;2019-01-21-visualizing-gradient-boosting_files/figure-html/&quot; Introduction Gradient boosting has proven to be a popular and successful learning algorightm in both machine learning competitions and in production commercially. (LINKS for both).
-Given the success the algroithm as experienced, several years ago when I was learning about the algorithm I came across a (post)[] outlining how boosting gradually moves closer to the goal output.
-Gradient boosted trees provide these advantages along with the advantage of capturing non-linear relationships among the variables.">
+<meta name="description" content="Introduction Ensemble methods (random forests, gradient boosting machines) have proven to be a winning strategy on Kaggle1. The building blocks of those methods are decision trees, which are generally well understood. It can seem, however, that the ensembling of many trees can produce a sort of magic that allows it to achieve much better performance than a single tree.
+When learning about these methods the discussion moves quickly from declaring them an ensemble of trees into a discussion of hyperparameter tuning, glossing over exactly how or why boosting works so well.">
 
-<meta property="og:title" content="Visualizing Gradient Boosting for Classification" />
-<meta property="og:description" content="knitr::opts_chunk$get(&#39;fig.path&#39;) ## [1] &quot;2019-01-21-visualizing-gradient-boosting_files/figure-html/&quot; Introduction Gradient boosting has proven to be a popular and successful learning algorightm in both machine learning competitions and in production commercially. (LINKS for both).
-Given the success the algroithm as experienced, several years ago when I was learning about the algorithm I came across a (post)[] outlining how boosting gradually moves closer to the goal output.
-Gradient boosted trees provide these advantages along with the advantage of capturing non-linear relationships among the variables." />
+<meta property="og:title" content="Visualizing Gradient Boosting Decision Trees for Classification" />
+<meta property="og:description" content="Introduction Ensemble methods (random forests, gradient boosting machines) have proven to be a winning strategy on Kaggle1. The building blocks of those methods are decision trees, which are generally well understood. It can seem, however, that the ensembling of many trees can produce a sort of magic that allows it to achieve much better performance than a single tree.
+When learning about these methods the discussion moves quickly from declaring them an ensemble of trees into a discussion of hyperparameter tuning, glossing over exactly how or why boosting works so well." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="/post/visualizing-gradient-boosting/" />
-
-
-
-<meta property="article:published_time" content="2019-02-10T00:00:00&#43;00:00"/>
-<meta property="article:modified_time" content="2019-02-10T00:00:00&#43;00:00"/>
-
-
-
-
-
-
-
-
-
-
+<meta property="article:published_time" content="2019-04-01T00:00:00&#43;00:00"/>
+<meta property="article:modified_time" content="2019-04-01T00:00:00&#43;00:00"/>
 
 
 <title>
 
 
-     Visualizing Gradient Boosting for Classification 
+     Visualizing Gradient Boosting Decision Trees for Classification 
 
 </title>
 <link rel="canonical" href="/post/visualizing-gradient-boosting/">
@@ -60,11 +45,11 @@ Gradient boosted trees provide these advantages along with the advantage of capt
 
 
     
-    <link rel="stylesheet" href="/css/reset.css?t=2019-02-23%2015%3a27%3a48.04799566%20-0600%20CST%20m%3d%2b0.027862540">
-    <link rel="stylesheet" href="/css/pygments.css?t=2019-02-23%2015%3a27%3a48.04799566%20-0600%20CST%20m%3d%2b0.027862540">
-    <link rel="stylesheet" href="/css/main.css?t=2019-02-23%2015%3a27%3a48.04799566%20-0600%20CST%20m%3d%2b0.027862540">
+    <link rel="stylesheet" href="/css/reset.css?t=2019-04-01%2006%3a09%3a49.624791338%20-0500%20CDT%20m%3d%2b0.031249985">
+    <link rel="stylesheet" href="/css/pygments.css?t=2019-04-01%2006%3a09%3a49.624791338%20-0500%20CDT%20m%3d%2b0.031249985">
+    <link rel="stylesheet" href="/css/main.css?t=2019-04-01%2006%3a09%3a49.624791338%20-0500%20CDT%20m%3d%2b0.031249985">
     
-        <link rel="stylesheet" href="/css/override.css?t=2019-02-23%2015%3a27%3a48.04799566%20-0600%20CST%20m%3d%2b0.027862540">
+        <link rel="stylesheet" href="/css/override.css?t=2019-04-01%2006%3a09%3a49.624791338%20-0500%20CDT%20m%3d%2b0.031249985">
     
 
 
@@ -96,6 +81,8 @@ Gradient boosted trees provide these advantages along with the advantage of capt
                 
                 
                 
+                
+                    
                 
                     
                 
@@ -170,23 +157,23 @@ Gradient boosted trees provide these advantages along with the advantage of capt
         <div class="content">
             <div class="page-heading">
 
-    Visualizing Gradient Boosting for Classification
+    Visualizing Gradient Boosting Decision Trees for Classification
 
 </div>
 
             <div class="markdown">
-                <pre class="r"><code>knitr::opts_chunk$get(&#39;fig.path&#39;)</code></pre>
-<pre><code>## [1] &quot;2019-01-21-visualizing-gradient-boosting_files/figure-html/&quot;</code></pre>
+                
+
+
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
-<p>Gradient boosting has proven to be a popular and successful learning algorightm in both machine learning competitions and in production commercially. (LINKS for both).</p>
-<p>Given the success the algroithm as experienced, several years ago when I was learning about the algorithm I came across a (post)[] outlining how boosting gradually moves closer to the goal output.</p>
-<p>Gradient boosted trees provide these advantages along with the advantage of capturing non-linear relationships among the variables.</p>
-<p>In this post I highlight the algorithm, write code to fit this model, and apply it to a dataset where the output is a non-linear function of the input.</p>
+<p>Ensemble methods (random forests, gradient boosting machines) have proven to be a winning strategy on Kaggle<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a>. The building blocks of those methods are decision trees, which are generally well understood. It can seem, however, that the ensembling of many trees can produce a sort of magic that allows it to achieve much better performance than a single tree.</p>
+<p>When learning about these methods the discussion moves quickly from declaring them an ensemble of trees into a discussion of hyperparameter tuning, glossing over exactly how or why boosting works so well. When I was first learning the boosting algorithm I came across a blog post by Arthur Charpentier outlining and visualizing in a regression context how boosting gradually moves predictions closer to their target<a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a>. Inspired by that post, I’ve written up this post highlighting the boosting algorithm for classification.</p>
+<p>Here I’ll highlight the algorithm, write code and fit a model to a toy dataset, visualize the boosting process for both fitted values and loss reduction, and make predictions before briefly discussing implications for cross-validation and model selection in a larger machine learning task.</p>
 </div>
 <div id="algorithm" class="section level2">
 <h2>Algorithm</h2>
-<p>In <em>An Introduction to Statistical Learning</em> by James, Witten, Hastie, and Tibshirani they lay out the boosting algorithm on page 322:</p>
+<p>In <em>An Introduction to Statistical Learning</em> by James, Witten, Hastie, and Tibshirani they lay out the boosting algorithm on page 322:<a href="#fn3" class="footnoteRef" id="fnref3"><sup>3</sup></a></p>
 <ol style="list-style-type: decimal">
 <li>Set <span class="math inline">\(\hat{f}(x)\)</span> = 0 and <span class="math inline">\(r_{i}\)</span> = <span class="math inline">\(y_{i}\)</span> for all <span class="math inline">\(i\)</span> in the training set.</li>
 <li>For <span class="math inline">\(b\)</span> = 1,2,…,B, repeat:
@@ -198,8 +185,8 @@ Gradient boosted trees provide these advantages along with the advantage of capt
 <li>Output the boosted model, <span class="math inline">\(\hat{f}(x) = \sum_{b=1}^{B}\lambda \hat{f}^{b}(x)\)</span></li>
 </ol>
 </div>
-<div id="my-paraphrasing-of-the-the-alrgorithm-without-the-mathematical-notation" class="section level2">
-<h2>My Paraphrasing of the the Alrgorithm, Without the Mathematical Notation</h2>
+<div id="paraphrasing-the-algorithm-without-mathematical-notation" class="section level2">
+<h2>Paraphrasing the Algorithm, Without Mathematical Notation</h2>
 <ol style="list-style-type: decimal">
 <li>Set all predictions to 0, and calculate the residuals (will be the value of <span class="math inline">\(y\)</span> since all predictions are 0).</li>
 <li>At each of <span class="math inline">\(B\)</span> iterations do:
@@ -215,37 +202,36 @@ Gradient boosted trees provide these advantages along with the advantage of capt
 <h2>Data</h2>
 <p>I’ll create a fake dataset with a non-linear relationship between the input and the output. The output <code>y</code> takes on a value of either 0 or 1 based on the value of <code>X</code>.</p>
 <pre class="r"><code>X &lt;- seq(from = 0, to = 100, by = 1)
-y &lt;- ifelse(X &lt;= 15,1,
-            ifelse(X &lt;= 25,0,
-                   ifelse(X &lt;= 45,1,
-                          ifelse(X &lt;= 70,0,
-                                 ifelse(X &lt;= 95,1,0)))))
-plot(x = X, y = y,pch = 20)</code></pre>
-<p><img src="/post/2019-01-21-visualizing-gradient-boosting_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
+y &lt;- ifelse(X &lt;= 15, 1,
+            ifelse(X &lt;= 25, 0,
+                   ifelse(X &lt;= 45, 1,
+                          ifelse(X &lt;= 70, 0,
+                                 ifelse(X &lt;= 95, 1, 0)))))
+plot(x = X, y = y, pch = 20)</code></pre>
+<p><img src="/post/2019-01-21-visualizing-gradient-boosting_files/figure-html/unnamed-chunk-1-1.png" width="672" /></p>
 </div>
-<div id="code" class="section level2">
-<h2>Code</h2>
+<div id="coding-the-algorithm" class="section level2">
+<h2>Coding the Algorithm</h2>
 <ol start="0" style="list-style-type: decimal">
-<li>Load libraries, instantiate R objects to store intermediate results and set hyperparameters.</li>
+<li>Load libraries, instantiate R objects to store intermediate results, write loss function, and set hyperparameters.</li>
 </ol>
 <pre class="r"><code>library(tibble)
-library(ggplot2)
-library(gganimate)
 library(rpart)
 trees &lt;- list()
 predictions &lt;- list()
 losses &lt;- numeric()
-logloss_func &lt;- function(y,yhat){
+logloss_func &lt;- function(y, yhat){
   sum(-y*log(yhat+1e-8) + (1-yhat)*log(1-yhat+1e-8)) # add stability to log calculation
 }
-B = 100
-lambda = 0.2</code></pre>
+B = 50
+lambda = 0.2
+maxdepth = 1</code></pre>
 <ol style="list-style-type: decimal">
 <li>Set <span class="math inline">\(\hat{f}(x)\)</span> = 0 and <span class="math inline">\(r_{i}\)</span> = <span class="math inline">\(y_{i}\)</span> for all <span class="math inline">\(i\)</span> in the training set.</li>
 </ol>
 <p>We’ll use <code>yhat</code> for predictions and <code>r</code> for residuals.</p>
-<pre class="r"><code>data &lt;- tibble(X,y)
-data$yhat &lt;- rep(0,times = nrow(data))
+<pre class="r"><code>data &lt;- tibble(X, y)
+data$yhat &lt;- rep(0, times = nrow(data))
 data$r &lt;- data$y - data$yhat</code></pre>
 <ol start="2" style="list-style-type: decimal">
 <li>For <span class="math inline">\(b\)</span> = 1,2,…,B, repeat:
@@ -257,7 +243,7 @@ data$r &lt;- data$y - data$yhat</code></pre>
 </ol>
 <pre class="r"><code>for(b in 1:B){
   # Part a
-  fit &lt;- rpart(r ~ X, data=data, maxdepth = 1, method = &quot;anova&quot;)
+  fit &lt;- rpart(r ~ X, data=data, maxdepth = maxdepth, method = &quot;anova&quot;)
   # Part b
   data$yhat &lt;- data$yhat + lambda*predict(fit,newdata=data)
   # Part c
@@ -265,7 +251,7 @@ data$r &lt;- data$y - data$yhat</code></pre>
   
   # Save intermediate results for visualization later, and remove current tree
   trees[b] &lt;- list(fit)
-  losses &lt;- c(losses,logloss_func(data$y,data$yhat))
+  losses &lt;- c(losses, logloss_func(data$y, data$yhat))
   predictions[[b]] &lt;- tibble(X = data$X,
                            yhat = data$yhat)
   rm(fit)
@@ -276,59 +262,104 @@ data$r &lt;- data$y - data$yhat</code></pre>
 <pre class="r"><code>boost_prediction &lt;- function(X,num_trees){
   pred &lt;- numeric(length = length(X))
   for(j in c(1:num_trees)){
-    pred &lt;- pred + lambda*predict(trees[[j]],newdata = data.frame(X = X))
-    print(pred)
+    pred &lt;- pred + lambda*predict(trees[[j]], newdata = data.frame(X = X))
   }
   return(pred)
 }</code></pre>
 </div>
 <div id="visualize" class="section level2">
 <h2>Visualize</h2>
-<div id="the-loss-function" class="section level4">
-<h4>The loss function</h4>
-<pre class="r"><code>loss_plot &lt;- ggplot(data = tibble(iteration = c(1:B),
-                                  loss = losses),
-                    aes(x = iteration, y = loss)) +
-  geom_point() +
-  geom_line()
-loss_plot</code></pre>
-<p><img src="/post/2019-01-21-visualizing-gradient-boosting_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
-</div>
-<div id="the-boosting-process" class="section level4">
-<h4>The boosting process</h4>
-<pre class="r"><code>plot_data &lt;- do.call(rbind,predictions)
-plot_data$t &lt;- rep(c(1:B), each = 101)
-plot_data$y &lt;- rep(data$y,times = B)
+<p>The boosting procedure is an iterative one, which lends itself nicely to visualization. In Step 2 of the code we saved the values of the loss function after every iteration, as well as the fitted values of the model. Here we’ll construct a visualization of the process. This visualization is made possible by the fantastic <code>gganimate</code> and <code>magick</code> packages in R.<a href="#fn4" class="footnoteRef" id="fnref4"><sup>4</sup></a></p>
+<pre class="r"><code>library(ggplot2)
+library(gganimate)
+library(magick)</code></pre>
+<div id="building-visualization-datasets" class="section level4">
+<h4>Building visualization datasets</h4>
+<pre class="r"><code>loss_plot_data &lt;- tibble(iteration = c(1:B),
+                                  loss = losses)
 
-p &lt;- ggplot(data = plot_data,
-       aes(x = X,y = y, frame = t),
+boost_plot_data &lt;- do.call(rbind, predictions)
+boost_plot_data$B &lt;- rep(c(1:B), each = length(X))
+boost_plot_data$y &lt;- rep(data$y, times = B)</code></pre>
+</div>
+<div id="create-the-individual-plots" class="section level4">
+<h4>Create the individual plots</h4>
+<pre class="r"><code>boost_plot &lt;- ggplot(data = boost_plot_data,
+       aes(x = X, y = y),
        colour = &#39;black&#39;) +
   geom_point() +
-  geom_point(aes(x = X, y = yhat,frame = t), colour = &#39;red&#39;) +
-  ggtitle(&quot;Iteration:&quot;)
+  geom_point(aes(x = X, y = yhat), colour = &#39;red&#39;) +
+  transition_states(B) +
+  labs(title = &#39;Iteration: {closest_state}&#39;, subtitle = &quot;Boosting&quot;,x = &#39;X&#39;, y = &#39;y&#39;)
 
-gganimate(p, interval = 0.1)</code></pre>
-<p>–<img src="/home/john/johnckane.com/static/img/boosting.gif" /> <img src="img/boosting.gif" /></p>
+boost_gif &lt;- animate(boost_plot, width = 400, height = 400)</code></pre>
+<pre class="r"><code>loss_plot &lt;- ggplot(data = loss_plot_data,
+                aes(x = iteration, y = loss),
+                colour = &#39;black&#39;) +
+  geom_point() +
+  geom_line() +
+  transition_reveal(along = iteration) +
+  shadow_trail(distance = 1/B) +
+  labs(title = &#39; &#39;, subtitle = &#39;Loss&#39;)
+
+loss_gif &lt;- animate(loss_plot,width = 400, height = 400)</code></pre>
+</div>
+<div id="combine-the-gifs-and-view" class="section level4">
+<h4>Combine the gifs and view</h4>
+<pre class="r"><code>loss_mgif &lt;- image_read(loss_gif)
+boost_mgif &lt;- image_read(boost_gif)
+
+combined_gif &lt;- image_append(c(boost_mgif[1], loss_mgif[1]))
+
+for(i in 2:100){
+  combined &lt;- image_append(c(boost_mgif[i], loss_mgif[i]))
+  combined_gif &lt;- c(combined_gif, combined)
+}
+
+combined_gif</code></pre>
+<div class="figure">
+<img src="/home/john/johnckane.com/static/img/boosting-and-loss.gif" />
+
+</div>
+<p>Almost all of the loss reduction occurs in the first 10 iterations even though there isn’t separation of all the six groups of <span class="math inline">\(X\)</span> values until the 22nd iteration. Beyond the 22nd iteration we can see improvement in predictions but the changes are slow and gradual, which is also reflected in the loss reduction graph. By the time we get to the 50th iteration we’re in a position where if we draw our decision boundary to be at <span class="math inline">\(\hat{y} = 0.50\)</span> and predict a value of 1 for all values at or above that line and a value of 0 to all points below that line, that we’d achieve 100% accuracy in the classification task.</p>
 </div>
 </div>
-<div id="conclusion" class="section level2">
-<h2>Conclusion</h2>
+<div id="making-predictions" class="section level2">
+<h2>Making predictions</h2>
+<p>To illustrate the sequential nature of making predictions, I’ll generate predictions for five <span class="math inline">\(X\)</span> values, and print out the model’s predictions using 5, 10, or 50 trees. Generating predictions was Step 3 in the algorithm.</p>
+<pre class="r"><code>vals_to_predict &lt;- c(5,25,35,60,99)
+prediction_tibble &lt;- tibble(x = vals_to_predict,
+                            y = data$y[vals_to_predict + 1], # the first value of X is 0 so the index of x is x+1
+                            five_trees = sapply(vals_to_predict, boost_prediction, num_trees = 5),
+                            ten_trees = sapply(vals_to_predict, boost_prediction, num_trees = 10),
+                            fifty_trees = sapply(vals_to_predict, boost_prediction, num_trees = 50))
+prediction_tibble</code></pre>
+<pre><code>## # A tibble: 5 x 5
+##       x     y five_trees ten_trees fifty_trees
+##   &lt;dbl&gt; &lt;dbl&gt;      &lt;dbl&gt;     &lt;dbl&gt;       &lt;dbl&gt;
+## 1     5     1      0.515     0.727       0.859
+## 2    25     0      0.421     0.563       0.449
+## 3    35     1      0.421     0.563       0.751
+## 4    60     0      0.294     0.337       0.208
+## 5    99     0      0.427     0.584       0.490</code></pre>
+<p>As seen above, where <span class="math inline">\(y=1\)</span> the predictions follow an upward trajectory of continuous improvement. Where <span class="math inline">\(y=0\)</span> however, there is actually a decrease in accuracy going from 5 trees to 10 before becoming more accurate by the time we reach fifty trees. I think this is a function of the fact that maximum tree depth is set to 1, so that any split that includes a mixture of both 0’s and 1’s in a terminal node will naturally move predictions upward, away from 0, where all predictions began. Over the course of the boosting process splits will be made where the average value in a terminal node is less than current predictions, which will bring the predictions for values where <span class="math inline">\(y=0\)</span> closer to the true value.</p>
 </div>
-<div id="references" class="section level2">
-<h2>References</h2>
-<p><a href="https://freakonometrics.hypotheses.org/19874" class="uri">https://freakonometrics.hypotheses.org/19874</a></p>
-<p>James, Gareth Michael., et al. An Introduction to Statistical Learning with Applications in R. Springer, 2013.</p>
+<div id="applications-to-validation-and-test-datasets" class="section level2">
+<h2>Applications to validation and test datasets</h2>
+<p>Before deploying a model it is wise to have an idea of how well it will make predictions on data previously unseen by it. Best practice in this case is to split available data into training, validation, and test datasets. The training dataset is used to fit the model, performance of the model at varying values of hyperparameters is evaluated using the validation dataset, and once a single is model is chosen for deployment, an estimate of model performance on previously unseen data is estimated by using the test dataset.</p>
+<p>It is generally true that model fit metrics strictly improve on the training dataset as model complexity grows. This is not the case with validation datasets. There comes a point the model begins to learn the idiosyncracies of the training data rather than a more general relationship between input features and the output of the data generating mechanism. The appropriate model to use in deployment would be the one that performs the best on the validation dataset, even if it doesn’t perform as well on the training dataset.</p>
+<p>Hyperparameter tuning and model selection is not the focus of this post, but several details in this example are relevant to its application. The hyperparameters here are the number of trees (<span class="math inline">\(B\)</span>), the value of the learning rate (<span class="math inline">\(\lambda\)</span>), and the maximum depth of each tree (1). In this example <span class="math inline">\(\lambda\)</span> and maximum tree depth remained fixed and we iterated our model fitting over <span class="math inline">\(B\)</span> different trees. A fuller treatment would involve fitting multiple models to the training data at varying levels of <span class="math inline">\(\lambda\)</span> and maximum tree depth and comparing model performance on the validation dataset using different number of trees fit (anywhere from <span class="math inline">\(1\)</span> to <span class="math inline">\(B\)</span>).</p>
 </div>
 <div id="session-info" class="section level2">
 <h2>Session Info</h2>
 <pre class="r"><code>sessionInfo()</code></pre>
 <pre><code>## R version 3.4.4 (2018-03-15)
 ## Platform: x86_64-pc-linux-gnu (64-bit)
-## Running under: Ubuntu 16.04.4 LTS
+## Running under: Ubuntu 18.04.2 LTS
 ## 
 ## Matrix products: default
-## BLAS: /usr/lib/openblas-base/libblas.so.3
-## LAPACK: /usr/lib/libopenblasp-r0.2.18.so
+## BLAS: /usr/lib/x86_64-linux-gnu/blas/libblas.so.3.7.1
+## LAPACK: /usr/lib/x86_64-linux-gnu/lapack/liblapack.so.3.7.1
 ## 
 ## locale:
 ##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
@@ -342,20 +373,34 @@ gganimate(p, interval = 0.1)</code></pre>
 ## [1] methods   stats     graphics  grDevices utils     datasets  base     
 ## 
 ## other attached packages:
-## [1] rpart_4.1-13         gganimate_0.1.0.9000 ggplot2_3.1.0       
-## [4] tibble_1.4.2        
+## [1] magick_2.0      gganimate_1.0.2 ggplot2_3.1.0   rpart_4.1-13   
+## [5] tibble_2.0.1   
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] Rcpp_0.12.19     pillar_1.3.0     compiler_3.4.4   plyr_1.8.4      
-##  [5] bindr_0.1.1      base64enc_0.1-3  tools_3.4.4      digest_0.6.18   
-##  [9] evaluate_0.12    gtable_0.2.0     pkgconfig_2.0.2  rlang_0.3.0.1   
-## [13] yaml_2.2.0       blogdown_0.9     xfun_0.4         bindrcpp_0.2.2  
-## [17] withr_2.1.2      stringr_1.3.1    dplyr_0.7.7      knitr_1.20      
-## [21] rprojroot_1.3-2  grid_3.4.4       tidyselect_0.2.5 glue_1.3.0      
-## [25] R6_2.3.0         animation_2.5    rmarkdown_1.10   bookdown_0.7    
-## [29] purrr_0.2.5      magrittr_1.5     backports_1.1.2  scales_1.0.0    
-## [33] htmltools_0.3.6  assertthat_0.2.0 colorspace_1.3-2 labeling_0.3    
-## [37] stringi_1.2.4    lazyeval_0.2.1   munsell_0.5.0    crayon_1.3.4</code></pre>
+##  [1] Rcpp_1.0.0        pillar_1.3.1      compiler_3.4.4   
+##  [4] plyr_1.8.4        prettyunits_1.0.2 tools_3.4.4      
+##  [7] progress_1.2.0    digest_0.6.18     evaluate_0.13    
+## [10] gtable_0.2.0      png_0.1-7         pkgconfig_2.0.2  
+## [13] rlang_0.3.1       cli_1.0.1         yaml_2.2.0       
+## [16] blogdown_0.11     xfun_0.5          withr_2.1.2      
+## [19] dplyr_0.8.0.1     stringr_1.4.0     knitr_1.22       
+## [22] hms_0.4.2         grid_3.4.4        tidyselect_0.2.5 
+## [25] glue_1.3.0        R6_2.4.0          fansi_0.4.0      
+## [28] gifski_0.8.6      rmarkdown_1.11    bookdown_0.9     
+## [31] farver_1.1.0      purrr_0.3.1       tweenr_1.0.1     
+## [34] magrittr_1.5      scales_1.0.0      htmltools_0.3.6  
+## [37] assertthat_0.2.0  colorspace_1.4-0  labeling_0.3     
+## [40] utf8_1.1.4        stringi_1.3.1     lazyeval_0.2.1   
+## [43] munsell_0.5.0     crayon_1.3.4</code></pre>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Goldbloom, Anthony. <a href="https://www.kaggle.com/antgoldbloom/what-algorithms-are-most-successful-on-kaggle">“What algorithms are most successful on Kaggle?”</a>. Retrieved April 1, 2019.<a href="#fnref1">↩</a></p></li>
+<li id="fn2"><p>Charpenter, Arthur (June 26, 2015). <a href="https://freakonometrics.hypotheses.org/19874.Retrieved">“An Attempt to Understand Boosting Algorithms”</a>. <em>Freakonometrics</em>. April 1, 2019.<a href="#fnref2">↩</a></p></li>
+<li id="fn3"><p>James, Gareth Michael., et al. An Introduction to Statistical Learning with Applications in R. Springer, 2013.<a href="#fnref3">↩</a></p></li>
+<li id="fn4"><p>Peterson, Thomas Lin (August 17, 2018). <a href="https://github.com/thomasp85/gganimate/wiki/Animation-Composition">“Animation Composition”</a>. Retrieved April 1, 2019.<a href="#fnref4">↩</a></p></li>
+</ol>
 </div>
 
             </div>
@@ -364,12 +409,16 @@ gganimate(p, interval = 0.1)</code></pre>
 </section>
 
 
-<script>
-window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
-ga('create', 'UA-123-45', 'auto');
-ga('send', 'pageview');
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-123-45', 'auto');
+	
+	ga('send', 'pageview');
+}
 </script>
-<script async src='//www.google-analytics.com/analytics.js'></script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
 
 
 

@@ -1,7 +1,7 @@
 ---
 title: "Visualizing Gradient Boosting Decision Trees for Classification"
 author: "John Kane"
-date: '2019-03-27'
+date: '2019-04-01'
 slug: visualizing-gradient-boosting
 tags:
 - machine learning
@@ -19,7 +19,7 @@ Ensemble methods (random forests, gradient boosting machines) have proven to be 
 
 When learning about these methods the discussion moves quickly from declaring them an ensemble of trees into a discussion of hyperparameter tuning, glossing over exactly how or why boosting works so well. When I was first learning the boosting algorithm I came across a blog post by Arthur Charpentier outlining and visualizing in a regression context how boosting gradually moves predictions closer to their target[^2]. Inspired by that post, I've written up this post highlighting the boosting algorithm for classification.
 
-Here I'll highlight the algorithm, write code to fit a model, apply it to a dataset where the output is a non-linear function of the input,visualize the boosting process and associated decrease in the loss function, and briefly discuss implications for cross-validation and model selection in a larger machine learning task. 
+Here I'll highlight the algorithm, write code and fit a model to a toy dataset, visualize the boosting process for both fitted values and loss reduction, and make predictions before briefly discussing implications for cross-validation and model selection in a larger machine learning task. 
 
 ## Algorithm
 
@@ -132,7 +132,7 @@ boost_prediction <- function(X,num_trees){
 
 ## Visualize 
 
-The boosting procedure is an iterative process, which lends itself nicely to visualization. In Step 2 of the code we saved the values of the loss function after every iteration, as well as the fitted values of the model. Here we'll construct a visualization of the process. This visualization is made possible by the fantastic `gganimate` and `magick` packages in R.[^4]
+The boosting procedure is an iterative one, which lends itself nicely to visualization. In Step 2 of the code we saved the values of the loss function after every iteration, as well as the fitted values of the model. Here we'll construct a visualization of the process. This visualization is made possible by the fantastic `gganimate` and `magick` packages in R.[^4]
 
 ```{r, warning = F, message = F}
 library(ggplot2)
@@ -216,9 +216,9 @@ combined_gif
 
 ![](/home/john/johnckane.com/static/img/boosting-and-loss.gif)
 
-Almost all of the loss reduction occurs in the first 10 iterations even though there isn't separation of all the six groups of $X$ values until the 22nd iteration. Beyond the 22nd iteration we can see improvement in predictions but the changes are slow and gradual, which is also reflected in the loss reduction graph. By the time we get to the 50th iteration we're in a position where if draw our decision boundary to be at $\hat{y} = 0.50$ and predict a value of 1 for all values at or above that line and a value of 0 to all points below that line, that we'd achieve 100% accuracy in the classification task.
+Almost all of the loss reduction occurs in the first 10 iterations even though there isn't separation of all the six groups of $X$ values until the 22nd iteration. Beyond the 22nd iteration we can see improvement in predictions but the changes are slow and gradual, which is also reflected in the loss reduction graph. By the time we get to the 50th iteration we're in a position where if we draw our decision boundary to be at $\hat{y} = 0.50$ and predict a value of 1 for all values at or above that line and a value of 0 to all points below that line, that we'd achieve 100% accuracy in the classification task.
 
-## Making predictions and applications to validation and test datasets
+## Making predictions 
 
 To illustrate the sequential nature of making predictions, I'll generate predictions for five $X$ values, and print out the model's predictions using 5, 10, or 50 trees. Generating predictions was Step 3 in the algorithm.
 
@@ -234,6 +234,9 @@ prediction_tibble
 
 As seen above, where $y=1$ the predictions follow an upward trajectory of continuous improvement. Where $y=0$ however, there is actually a decrease in accuracy going from 5 trees to 10 before becoming more accurate by the time we reach fifty trees. I think this is a function of the fact that maximum tree depth is set to 1, so that any split that includes a mixture of both 0's and 1's in a terminal node will naturally move predictions upward, away from 0, where all predictions began. Over the course of the boosting process splits will be made where the average value in a terminal node is less than current predictions, which will bring the predictions for values where $y=0$ closer to the true value. 
 
+
+## Applications to validation and test datasets
+
 Before deploying a model it is wise to have an idea of how well it will make predictions on data previously unseen by it. Best practice in this case is to split available data into training, validation, and test datasets. The training dataset is used to fit the model, performance of the model at varying values of hyperparameters is evaluated using the validation dataset, and once a single is model is chosen for deployment, an estimate of model performance on previously unseen data is estimated by using the test dataset. 
 
 It is generally true that model fit metrics strictly improve on the training dataset as model complexity grows. This is not the case with validation datasets. There comes a point the model begins to learn the idiosyncracies of the training data rather than a more general relationship between input features and the output of the data generating mechanism. The appropriate model to use in deployment would be the one that performs the best on the validation dataset, even if it doesn't perform as well on the training dataset. 
@@ -245,11 +248,13 @@ Hyperparameter tuning and model selection is not the focus of this post, but sev
 sessionInfo()
 ```
 
-[^1]: https://www.kaggle.com/antgoldbloom/what-algorithms-are-most-successful-on-kaggle
+[^1]: Goldbloom, Anthony. ["What algorithms are most successful on Kaggle?"](https://www.kaggle.com/antgoldbloom/what-algorithms-are-most-successful-on-kaggle). Retrieved April 1, 2019. 
 
-[^2]: https://freakonometrics.hypotheses.org/19874
+[^2]: Charpenter, Arthur (June 26, 2015). ["An Attempt to Understand Boosting Algorithms"](https://freakonometrics.hypotheses.org/19874.Retrieved). _Freakonometrics_. April 1, 2019. 
 
 [^3]: James, Gareth Michael., et al. An Introduction to Statistical Learning with Applications in R. Springer, 2013.
 
-[^4]: https://github.com/thomasp85/gganimate/wiki/Animation-Composition
+[^4]: Peterson, Thomas Lin (August 17, 2018). ["Animation Composition"](https://github.com/thomasp85/gganimate/wiki/Animation-Composition). Retrieved April 1, 2019. 
+
+
 
