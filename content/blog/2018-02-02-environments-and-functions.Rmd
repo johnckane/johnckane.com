@@ -85,7 +85,7 @@ The best way I can think to describe it is that the function `g` doesn't have an
 
 This is my attempt at illustrating the R environment I created:
 
-![](/home/john/johnckane.com/static/img/environment1.png)
+![](/img/environment1.png)
 
 So a solution would be to tell `g` to explicitly look in `f`'s environment. What is the name of the environment created when `f` is executed? Consider the function `f2` which prints the name of the environment that dataframe `df1` is created in.
 

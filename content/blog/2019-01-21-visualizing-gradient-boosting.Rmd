@@ -214,7 +214,7 @@ for(i in 2:100){
 combined_gif
 ```
 
-![](/home/john/johnckane.com/static/img/boosting-and-loss.gif)
+![](/img/boosting-and-loss.gif)
 
 Almost all of the loss reduction occurs in the first 10 iterations even though there isn't separation of all the six groups of $X$ values until the 22nd iteration. Beyond the 22nd iteration we can see improvement in predictions but the changes are slow and gradual, which is also reflected in the loss reduction graph. By the time we get to the 50th iteration we're in a position where if we draw our decision boundary to be at $\hat{y} = 0.50$ and predict a value of 1 for all values at or above that line and a value of 0 to all points below that line, that we'd achieve 100% accuracy in the classification task.
 

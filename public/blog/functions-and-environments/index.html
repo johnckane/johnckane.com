@@ -45,11 +45,11 @@ The following is the reprex I went about writing to include in the Stack Overflo
 
 
     
-    <link rel="stylesheet" href="/css/reset.css?t=2019-04-01%2006%3a12%3a57.498588014%20-0500%20CDT%20m%3d%2b0.034989171">
-    <link rel="stylesheet" href="/css/pygments.css?t=2019-04-01%2006%3a12%3a57.498588014%20-0500%20CDT%20m%3d%2b0.034989171">
-    <link rel="stylesheet" href="/css/main.css?t=2019-04-01%2006%3a12%3a57.498588014%20-0500%20CDT%20m%3d%2b0.034989171">
+    <link rel="stylesheet" href="/css/reset.css?t=2019-04-01%2006%3a22%3a56.220852648%20-0500%20CDT%20m%3d%2b0.031356886">
+    <link rel="stylesheet" href="/css/pygments.css?t=2019-04-01%2006%3a22%3a56.220852648%20-0500%20CDT%20m%3d%2b0.031356886">
+    <link rel="stylesheet" href="/css/main.css?t=2019-04-01%2006%3a22%3a56.220852648%20-0500%20CDT%20m%3d%2b0.031356886">
     
-        <link rel="stylesheet" href="/css/override.css?t=2019-04-01%2006%3a12%3a57.498588014%20-0500%20CDT%20m%3d%2b0.034989171">
+        <link rel="stylesheet" href="/css/override.css?t=2019-04-01%2006%3a22%3a56.220852648%20-0500%20CDT%20m%3d%2b0.031356886">
     
 
 
@@ -232,7 +232,7 @@ g1(1)</code></pre>
 <p>The best way I can think to describe it is that the function <code>g</code> doesn’t have any of the objects <code>df1</code>, <code>df2</code>, or <code>df3</code> in the local environment created on execution. So it goes and looks for them in <code>.GlobalEnv</code> where they are shielded by the environment of <code>f</code>. So it appears that <code>g</code> can’t cross into <code>f</code>’s environment to use things created there.</p>
 <p>This is my attempt at illustrating the R environment I created:</p>
 <div class="figure">
-<img src="/home/john/johnckane.com/static/img/environment1.png" />
+<img src="/img/environment1.png" />
 
 </div>
 <p>So a solution would be to tell <code>g</code> to explicitly look in <code>f</code>’s environment. What is the name of the environment created when <code>f</code> is executed? Consider the function <code>f2</code> which prints the name of the environment that dataframe <code>df1</code> is created in.</p>
