@@ -22,6 +22,16 @@ When learning about these methods the discussion moves quickly from declaring th
     </item>
     
     <item>
+      <title>Visualizing Gradient Boosting Decision Trees for Classification</title>
+      <link>/post/visualizing-gradient-boosting/</link>
+      <pubDate>Wed, 27 Mar 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/post/visualizing-gradient-boosting/</guid>
+      <description>Introduction Ensemble methods (random forests, gradient boosting machines) have proven to be a winning strategy on Kaggle1. The building blocks of those methods are decision trees, which are generally well understood. It can seem, however, that the ensembling of many trees can produce a sort of magic that allows it to achieve much better performance than a single tree.
+When learning about these methods the discussion moves quickly from declaring them an ensemble of trees into a discussion of hyperparameter tuning, glossing over exactly how or why boosting works so well.</description>
+    </item>
+    
+    <item>
       <title>NCAA Men&#39;s Tournament First Round Upsets</title>
       <link>/blog/ncaa-first-round-upsets/</link>
       <pubDate>Sun, 08 Apr 2018 00:00:00 +0000</pubDate>
