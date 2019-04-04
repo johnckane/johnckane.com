@@ -128,6 +128,20 @@ results_w_seeds %>%
 ```
 
 
+
+
+```{r}
+results_w_seeds %>%
+  filter(round == 6) %>%
+  group_by(Season,WSeed) %>%
+  summarise(count = n()) %>%
+  spread(key = WSeed, value = count, fill = 0) %>%
+  ungroup() %>%
+  select(-Season) %>%
+  summarise_if(is.numeric,mean,na.rm=TRUE) 
+```
+
+
 #1 Seeds have won the tournament 62% of the time! 
 
 ## Championship Game
@@ -145,7 +159,20 @@ results_w_seeds %>%
   arrange(desc(count))
 ```
 
-The most likely matchup is between a #1 and a #2 seed, followed by two #1 seeds. 
+The most likely matchup is between a #1 and a #2 seed, followed by two #1 seeds.
+
+
+```{r}
+results_w_seeds %>%
+  filter(round == 5) %>%
+  group_by(Season,WSeed) %>%
+  summarise(count = n()) %>%
+  spread(key = WSeed, value = count, fill = 0) %>%
+  ungroup() %>%
+  select(-Season) %>%
+  summarise_if(is.numeric,mean,na.rm=TRUE) 
+```
+
 
 
 ## Final Four
@@ -188,6 +215,50 @@ So on average there are:
 * 0
 
 So any recommendations would be to choose at least 1 and probably 2 #1 seeds, 1 #2 seed, and then pick from one of the three or four seeds. 
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+results_w_seeds %>%
+  filter(round > 0) %>%
+  group_by(Season,round,WSeed) %>%
+  summarise(count = n()) %>%
+  spread(key = WSeed, value = count, fill = 0) %>%
+  mutate(seed_dist = paste0(`01`,`02`,`03`,`04`,`05`,`06`,`07`,`08`,`09`,`10`,`11`,`12`,`13`,`14`,`15`,`16`)) %>%
+  select(Season,round,seed_dist) %>%
+  ungroup() %>%
+  group_by(round) %>%
+  summarise(years = n(),
+            distinct_dist = n_distinct(seed_dist))
+```
+
+
+
+
+```{r}
+results_w_seeds %>%
+  filter(round > 0) %>%
+  group_by(Season,round,WSeed) %>%
+  summarise(count = n()) %>%
+  spread(key = WSeed, value = count, fill = 0) %>%
+  ungroup() %>%
+  select(-Season) %>%
+  group_by(round) %>%
+  summarise_if(is_numeric,mean,na.rm = TRUE) %>%
+  t() %>%
+  round(1) %>%
+  `colnames<-`(c("Round of 32","Sweet 16","Elite 8","Final Four","Championship Game","Champion"))
+```
+
+
 
 
 
@@ -278,6 +349,26 @@ results_w_seeds %>%
 ```
 
 
+
+
+
+## Any time trends?
+
+
+```{r}
+ggplot(data = results_w_seeds %>%
+         filter())
+```
+
+
+
+
+
+
+But how did all this play out in 2019? Read on for details. 
+
+
+
 ## 2019 Results
 
 ### Round of 32
@@ -300,30 +391,33 @@ results_w_seeds %>%
 
 | Seed   | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 |
 |--------|---|---|---|---|---|---|---|---|---|----|----|----|----|----|----|----|
-| Average|3.4|2.5|2.1|1.9|1.4|1.2|0.8|0.4|0.2|0.7 |0.6 | 0.6|0.2 | 0.1| 0.0|0.0 |
-| 2019   | 4 | 4 | 4 | 2 | 1 | 0 | 0 | 0 | 0 | 0  | 0  | 0  |  0 |  0 |  0 |  0 |
+| Average|2.8|1.8|1.0|0.6|0.2|0.4|0.3|0.2|0.1|0.2 |0.2 | 0.6|0.0 | 0.0| 0.0|0.0 |
+| 2019   | 3 | 2 | 2 | 0 | 1 | 0 | 0 | 0 | 0 | 0  |  0 |  0 |  0 |  0 |  0 |  0 |
+
+
 
 ### Final Four
 
 | Seed   | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 |
 |--------|---|---|---|---|---|---|---|---|---|----|----|----|----|----|----|----|
-| Average|3.4|2.5|2.1|1.9|1.4|1.2|0.8|0.4|0.2|0.7 |0.6 | 0.6|0.2 | 0.1| 0.0|0.0 |
-| 2019   | 4 | 4 | 4 | 2 | 1 | 0 | 0 | 0 | 0 | 0  | 0  | 0  |  0 |  0 |  0 |  0 |
+| Average|1.6|0.8|0.5|0.4|0.2|0.1|0.1|0.1|0.0|0.0 |0.1 |0.0 |0.0 |0.0 |0.0 |0.0 |
+| 2019   | 1 | 1 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0  |  0 |  0 |  0 |  0 |  0 |  0 |
+
 
 ### Championship Game
 
 | Seed   | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 |
 |--------|---|---|---|---|---|---|---|---|---|----|----|----|----|----|----|----|
-| Average|3.4|2.5|2.1|1.9|1.4|1.2|0.8|0.4|0.2|0.7 |0.6 | 0.6|0.2 | 0.1| 0.0|0.0 |
-| 2019   | 4 | 4 | 4 | 2 | 1 | 0 | 0 | 0 | 0 | 0  | 0  | 0  |  0 |  0 |  0 |  0 |
+| Average|1.0|0.4|0.3|0.1|0.1|0.1|0.0|0.1|0.0|0.0 |0.0 |0.0 | 0.0|0.0 |0.0 |0.0 |
+| 2019   |
 
 
 ### Champion
 
 | Seed   | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 |
 |--------|---|---|---|---|---|---|---|---|---|----|----|----|----|----|----|----|
-| Average|3.4|2.5|2.1|1.9|1.4|1.2|0.8|0.4|0.2|0.7 |0.6 | 0.6|0.2 | 0.1| 0.0|0.0 |
-| 2019   | 4 | 4 | 4 | 2 | 1 | 0 | 0 | 0 | 0 | 0  | 0  | 0  |  0 |  0 |  0 |  0 |
+| Average|0.6|0.1|0.1|0.0|0.0|0.0|0.0|0.0|0.0|0.0 |0.0 |0.0 |0.0 |0.0 |0.0 |0.0 | 
+| 2019   | 
 
 
 
