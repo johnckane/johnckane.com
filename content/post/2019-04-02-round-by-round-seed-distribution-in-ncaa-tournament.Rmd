@@ -356,11 +356,65 @@ results_w_seeds %>%
 
 
 ```{r}
-ggplot(data = results_w_seeds %>%
-         filter())
+plot_data <- 
+  results_w_seeds %>%
+  filter(round > 0) %>%
+  group_by(Season,round,WSeed,.drop = FALSE) %>%
+  summarise(count = n()) %>% 
+  ungroup() %>%
+  complete(.,Season,round,WSeed,fill=list(count = 0))
+
+
+
+plot_data
+```
+
+```{r}
+
+plot_data <-
+  plot_data %>%
+  arrange(Season)
+
+ggplot(data = plot_data,
+       aes(x = round, y = count,group=round)) +
+  geom_path(aes(colour =Season)) +
+  facet_wrap(.~WSeed)
+  
+
 ```
 
 
+
+```{r}
+ggplot(data = plot_data,
+       aes(x = Season, y = count, group=round)) +
+  geom_point(aes(colour = round)) +
+  facet_grid(WSeed~round) +
+  geom_smooth()
+  
+```
+
+```{r}
+head(plot_data)
+```
+
+
+```{r}
+
+## will need alternative to dplyr, since this wants to return 34 not 30.
+plot_data2 <-
+  plot_data %>%
+  ungroup() %>%
+  group_by(WSeed,round) %>%
+  arrange(Season) %>%
+  mutate(count_roll_mean = roll_mean(count, n = 5))
+```
+
+
+```{r}
+plot_data %>%
+  filter(WSeed == '06', Season == 2018)
+```
 
 
 
