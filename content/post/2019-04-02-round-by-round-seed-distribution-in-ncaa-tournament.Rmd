@@ -28,10 +28,13 @@ The data comes from the Kaggle competition for March Madness[^1]. I didn't submi
 
 ```{r}
 library(tidyverse)
+library(knitr)
 seeds <- read_csv("/home/john/basketball/march_madness/2019/data/DataFiles/NCAATourneySeeds.csv")
 results <- read_csv("/home/john/basketball/march_madness/2019/data/DataFiles/NCAATourneyCompactResults.csv")
 ```
 
+
+Join the results data with the seed data. 
 
 ```{r}
 results_w_seeds <- 
@@ -43,11 +46,22 @@ results_w_seeds <-
              by = c('Season','LTeamID' = 'TeamID')) %>%
   mutate(matchup = paste0(pmin(WSeed,LSeed),"-",pmax(WSeed,LSeed))) %>%
   select(Season,WSeed,LSeed,matchup)
+
+head(results_w_seeds)
 ```
 
 
 
 #### Determining which round each game was
+
+The Kaggle data was missing one important piece of information -- which round of the tournment each game was. To solve for this I had to rely on my knowledge of the NCAA tournament. I knew that at some point they started add the "play-in" games on the Tuesday before the first round. Eventually addiontal play-in games were added first on the same Tuesday, then on the Wednesday before the first round. 
+
+Additionally, each round except for Final Four, Championship, and early play-in games take place over two days. 
+
+So the first four rounds occur on a total of 8 days, then the fifth and sixth rounds occur on one day each, so there are 10 total days worth of games, excluding the play-in games. 
+
+The Kaggle data does provide the day of the season for each game. If I first limit the results to only tournament games, then count how many days since the first tournament game of a give year occurred. 
+
 
 ```{r}
 season_first_tourney_day <-
@@ -72,6 +86,9 @@ results_tourney_day %>%
   group_by(Season) %>%
   summarise(count = n_distinct(days_since_first))
 ```
+
+
+With this data in hand I can assign rounds to each game based on Season and days since day of the tournament that year. I assign any play-in games to be round "0."
 
 
 ```{r}
@@ -116,7 +133,9 @@ results_w_seeds <-
 ```
 
 
-## Champion
+## Seed Distributions by Round
+
+#### Champion
 
 ```{r}
 results_w_seeds %>%
@@ -127,24 +146,7 @@ results_w_seeds %>%
   mutate(pct = count/sum(count))
 ```
 
-
-
-
-```{r}
-results_w_seeds %>%
-  filter(round == 6) %>%
-  group_by(Season,WSeed) %>%
-  summarise(count = n()) %>%
-  spread(key = WSeed, value = count, fill = 0) %>%
-  ungroup() %>%
-  select(-Season) %>%
-  summarise_if(is.numeric,mean,na.rm=TRUE) 
-```
-
-
-#1 Seeds have won the tournament 62% of the time! 
-
-## Championship Game
+#### Championship Game
 
 ```{r}
 results_w_seeds %>%
@@ -175,7 +177,7 @@ results_w_seeds %>%
 
 
 
-## Final Four
+#### Final Four
 
 ```{r}
 results_w_seeds %>%
@@ -192,39 +194,6 @@ results_w_seeds %>%
 
 There are 34 years worth of data and 25 distinct distributions of final four teams. I think at this point it becomes difficult to lean one way or another, as the most common Final Four happens less than 10% of the time.
 
-An alternative would be to look at the average number of seeds that make it to the final four. 
-
-```{r}
-results_w_seeds %>%
-  filter(round == 4) %>%
-  group_by(Season,WSeed) %>%
-  summarise(count = n()) %>%
-  spread(key = WSeed, value = count, fill = 0) %>%
-  ungroup() %>%
-  select(-Season) %>%
-  summarise_if(is.numeric,mean,na.rm=TRUE) 
-```
-
-So on average there are:
-* 1.6 1 seeds
-* 0.8 2 seeds
-* 0.5 3 seeds
-* 0.4 4 seeds
-* 0.2 5 seeds
-* 0.1 6 seeds
-* 0
-
-So any recommendations would be to choose at least 1 and probably 2 #1 seeds, 1 #2 seed, and then pick from one of the three or four seeds. 
-
-
-
-
-
-
-
-
-
-
 
 ```{r}
 results_w_seeds %>%
@@ -240,8 +209,16 @@ results_w_seeds %>%
             distinct_dist = n_distinct(seed_dist))
 ```
 
+I knew that there are seemingly infinite[^2] number of possible brackets, but I also thought that by collapsing the data into respective seeds that it would reduce some of that complexity. 
+
+Summarizing the above table, from 1985-2018 there has never been a repeat seed distribution in either the first or second round of the tournament! That was really surprising to me. 
+
+The Sweet Sixteen and Elite Eight also have 9 and 3, respectively, non-duplicate values. 
 
 
+## Average Seed Distribution by Round
+
+Since it isn't helpful to look at the actual distributions and their frequencies by round, we can summarize those distributions by taking the average. 
 
 ```{r}
 results_w_seeds %>%
@@ -255,171 +232,24 @@ results_w_seeds %>%
   summarise_if(is_numeric,mean,na.rm = TRUE) %>%
   t() %>%
   round(1) %>%
-  `colnames<-`(c("Round of 32","Sweet 16","Elite 8","Final Four","Championship Game","Champion"))
+  `colnames<-`(c("Round of 32","Sweet 16","Elite 8","Final Four","Championship Game","Champion")) %>%
+  kable()
 ```
 
-
-
-
-
-## Elite Eight
-
-```{r}
-results_w_seeds %>%
-  filter(round == 3) %>%
-  group_by(Season,WSeed) %>%
-  summarise(count = n()) %>%
-  spread(key = WSeed, value = count, fill = 0) %>%
-  mutate(sweet16 = paste0(`01`,`02`,`03`,`04`,`05`,`06`,`07`,`08`,`09`,`10`,`11`,`12`)) %>%
-  group_by(sweet16) %>%
-  summarise(count = n()) %>%
-  mutate(pct = count/sum(count)) %>%
-  arrange(desc(count))
-```
-
-
-
-```{r}
-results_w_seeds %>%
-  filter(round == 3) %>%
-  group_by(Season,WSeed) %>%
-  summarise(count = n()) %>%
-  spread(key = WSeed, value = count, fill = 0) %>%
-  ungroup() %>%
-  select(-Season) %>%
-  summarise_if(is.numeric,mean,na.rm=TRUE) 
-```
-
-
-
-## Sweet 16
-
-```{r}
-results_w_seeds %>%
-  filter(round == 2) %>%
-  group_by(Season,WSeed) %>%
-  summarise(count = n()) %>%
-  spread(key = WSeed, value = count, fill = 0) %>%
-  mutate(sweet16 = paste0(`01`,`02`,`03`,`04`,`05`,`06`,`07`,`08`,`09`,`10`,`11`,`12`,`13`,`14`,`15`)) %>%
-  group_by(sweet16) %>%
-  summarise(count = n()) %>%
-  mutate(pct = count/sum(count)) %>%
-  arrange(desc(count))
-```
-
-
-```{r}
-results_w_seeds %>%
-  filter(round == 2) %>%
-  group_by(Season,WSeed) %>%
-  summarise(count = n()) %>%
-  spread(key = WSeed, value = count, fill = 0) %>%
-  ungroup() %>%
-  select(-Season) %>%
-  summarise_if(is.numeric,mean,na.rm=TRUE) 
-```
-
-
-## Round of 32
-
-```{r}
-results_w_seeds %>%
-  filter(round == 1) %>%
-  group_by(Season,WSeed) %>%
-  summarise(count = n()) %>%
-  spread(key = WSeed, value = count, fill = 0) %>%
-  mutate(roundof32 = paste0(`01`,`02`,`03`,`04`,`05`,`06`,`07`,`08`,`09`,`10`,`11`,`12`,`13`,`14`,`15`,`16`)) %>%
-  group_by(roundof32) %>%
-  summarise(count = n()) %>%
-  mutate(pct = count/sum(count)) %>%
-  arrange(desc(count))
-```
-
-
-
-```{r}
-results_w_seeds %>%
-  filter(round == 1) %>%
-  group_by(Season,WSeed) %>%
-  summarise(count = n()) %>%
-  spread(key = WSeed, value = count, fill = 0) %>%
-  ungroup() %>%
-  select(-Season) %>%
-  summarise_if(is.numeric,mean,na.rm=TRUE) 
-```
+Down the left hand size of this table is the seed #'s, and the columns across the top correpsond to the round of the
+tournament. The table values are the average number of each seed to reach each round of the tournament. So there are on average 4 #1 Seeds in the Round of 32, 3.4 in the Sweet 16, 2.8 in the Elite Eight, 1.6 in the Final Four, 1.0 in the Championship, and is the winner 60% of the time. 
 
 
 
 
 
-## Any time trends?
-
-
-```{r}
-plot_data <- 
-  results_w_seeds %>%
-  filter(round > 0) %>%
-  group_by(Season,round,WSeed,.drop = FALSE) %>%
-  summarise(count = n()) %>% 
-  ungroup() %>%
-  complete(.,Season,round,WSeed,fill=list(count = 0))
-
-
-
-plot_data
-```
-
-```{r}
-
-plot_data <-
-  plot_data %>%
-  arrange(Season)
-
-ggplot(data = plot_data,
-       aes(x = round, y = count,group=round)) +
-  geom_path(aes(colour =Season)) +
-  facet_wrap(.~WSeed)
-  
-
-```
-
-
-
-```{r}
-ggplot(data = plot_data,
-       aes(x = Season, y = count, group=round)) +
-  geom_point(aes(colour = round)) +
-  facet_grid(WSeed~round) +
-  geom_smooth()
-  
-```
-
-```{r}
-head(plot_data)
-```
-
-
-```{r}
-
-## will need alternative to dplyr, since this wants to return 34 not 30.
-plot_data2 <-
-  plot_data %>%
-  ungroup() %>%
-  group_by(WSeed,round) %>%
-  arrange(Season) %>%
-  mutate(count_roll_mean = roll_mean(count, n = 5))
-```
-
-
-```{r}
-plot_data %>%
-  filter(WSeed == '06', Season == 2018)
-```
 
 
 
 
-But how did all this play out in 2019? Read on for details. 
+
+
+
 
 
 
@@ -463,7 +293,7 @@ But how did all this play out in 2019? Read on for details.
 | Seed   | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 |
 |--------|---|---|---|---|---|---|---|---|---|----|----|----|----|----|----|----|
 | Average|1.0|0.4|0.3|0.1|0.1|0.1|0.0|0.1|0.0|0.0 |0.0 |0.0 | 0.0|0.0 |0.0 |0.0 |
-| 2019   |
+| 2019   | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0  |  0 |  0 |  0 |  0 |  0 |  0 |
 
 
 ### Champion
@@ -485,10 +315,13 @@ I thought that
 The more difficult piece to this is the logical extension of knowing how many of each seed are likely to advance to the next
 round. For example, I know there are on average going to be 2 1 seeds in the Final Four, which 2 1 seeds do I pick?
 
-My approach this year was to use the pre tournament probabilities from 538[^2]. So I selected the 1 seed with the highest pre-tournament probability of winning the championship (Duke, ~28%)
+My approach this year was to use the pre tournament probabilities from 538[^4]. So I selected the 1 seed with the highest pre-tournament probability of winning the championship (Duke, ~28%)
 
+
+Next year: expand to looking at conditional distributions. So Conditional on a 1 seed winning the tournament, what is the average distribution. Then conditional on the chosen championship game, what is the average final four. And so on...
 
 
 [^1]:https://www.kaggle.com/c/mens-machine-learning-competition-2019
-[^2]:https://projects.fivethirtyeight.com/2019-march-madness-predictions/
-[^3]:https://www.cbssports.com/college-basketball/news/march-madness-2019-chalk-has-ruled-the-ncaa-tournament-so-far-but-that-sets-up-what-could-be-a-great-sweet-16/
+[^2]:https://www.ncaa.com/news/basketball-men/bracketiq/2019-03-20/perfect-ncaa-bracket-absurd-odds-march-madness-dream
+[^3]:https://projects.fivethirtyeight.com/2019-march-madness-predictions/
+[^4]:https://www.cbssports.com/college-basketball/news/march-madness-2019-chalk-has-ruled-the-ncaa-tournament-so-far-but-that-sets-up-what-could-be-a-great-sweet-16/
