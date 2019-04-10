@@ -87,9 +87,7 @@ results_tourney_day %>%
   summarise(count = n_distinct(days_since_first))
 ```
 
-
 With this data in hand I can assign rounds to each game based on Season and days since day of the tournament that year. I assign any play-in games to be round "0."
-
 
 ```{r}
 results_tourney_day <-
@@ -130,31 +128,71 @@ results_w_seeds <-
              seeds %>% mutate(LSeed = str_sub(Seed,2,3)),
              by = c('Season','LTeamID' = 'TeamID')) %>%
   select(Season,WSeed,LSeed,round)
+head(results_w_seeds)
 ```
 
 
 ## Seed Distributions by Round
 
-To represent the different seed distributions I'll concatenate the count of each seed in that round togehter.
+To represent the different seed distributions I'll concatenate the count of each seed in that round together.
 
 So if the Sweet Sixteen has:
 
-* 4 #1 seeds
-* 3 #2 seeds
+* 3 #1 seeds
+* 4 #2 seeds
 * 3 #3 seeds
 * 1 #4 seed
 * 2 #5 seeds
 * 2 #6 seeds
-* 1 #7 seeds
-* 0 8, 9, 10, 11, 12, 13, 14, 15, 16 seeds
+* 0 #7 seeds
+* 0 #8 seeds
+* 1 #9 seeds
+* 0 10, 11, 12, 13, 14, 15, 16 seeds
 
-In the data I'll represent that as `4331221000000000`. 
+In the data I'll represent that as `3431220010000000`. 
 
-In order to create this full picture we'll need an "anchor" data frame for joining.
+#### R Function: coalesce_join
+
+A trouble spot in the following analysis is that there are natural 0's in the dataset. For example a 5-seed has never won the championship, so when we go to count and represent the data, we want a `0` to be present.
+
+Coalescing two variables takes the value of that variable from one data frame, but if it is missing will take it from the second. 
+
+One way to coalesce would be to explicity right out each variable we'd like to coalesce in SQL, e.g.
+
+This can be tedious if there are many variables you need to coalesce. 
+
+`dplyr` does have a `coalesce()` function, but you need to write out explicitly which functions you need to coalesce. 
+
+It would be nice if we could join two tables, and naturally coalesce the columns in both without explicitly coding each one. 
+
+That's what the excellent `coalesce_join` function from Edward Visel's blog does[^5]. I'll be using it a lot in this analysis.
+
 ```{r}
-anchor <- tibble(`01` = 0,`02` = 0, `03` = 0, `04` = 0, `05` = 0, `06` = 0, `07` = 0, `08` = 0, `09` = 0, `10` = 0, `11` = 0, `12` =0, `13` = 0, `14` = 0, `15` = 0, `16` = 0)
+coalesce_join <- function(x, y, 
+                          by = NULL, suffix = c(".x", ".y"), 
+                          join = dplyr::full_join, ...) {
+    joined <- join(x, y, by = by, suffix = suffix, ...)
+    # names of desired output
+    cols <- union(names(x), names(y))
+    
+    to_coalesce <- names(joined)[!names(joined) %in% cols]
+    suffix_used <- suffix[ifelse(endsWith(to_coalesce, suffix[1]), 1, 2)]
+    # remove suffixes and deduplicate
+    to_coalesce <- unique(substr(
+        to_coalesce, 
+        1, 
+        nchar(to_coalesce) - nchar(suffix_used)
+    ))
+    
+    coalesced <- purrr::map_dfc(to_coalesce, ~dplyr::coalesce(
+        joined[[paste0(.x, suffix[1])]], 
+        joined[[paste0(.x, suffix[2])]]
+    ))
+    names(coalesced) <- to_coalesce
+    
+    dplyr::bind_cols(joined, coalesced)[cols]
+}
 ```
-
 
 #### Champion
 
@@ -164,9 +202,11 @@ results_w_seeds %>%
   group_by(Season,WSeed) %>%
   summarise(count = n()) %>%
   spread(key = WSeed, value = count, fill = 0) %>%
-  full_join(.,
+  mutate(dummy = 1) %>%
+  coalesce_join(.,
             tibble(`01` = 0,`02` = 0, `03` = 0, `04` = 0, `05` = 0, `06` = 0, `07` = 0, `08` = 0, `09` = 0, `10` = 0, 
-                   `11` = 0, `12` =0, `13` = 0, `14` = 0, `15` = 0, `16` = 0))
+                   `11` = 0, `12` =0, `13` = 0, `14` = 0, `15` = 0, `16` = 0, dummy = 1),
+            by = "dummy") %>%
   replace(.,is.na(.),0) %>%
   mutate(champion = paste0(`01`,`02`,`03`,`04`,`05`,`06`,`07`,`08`,`09`,`10`,`11`,`12`,`13`,`14`,`15`,`16`)) %>%
   group_by(champion) %>%
@@ -174,6 +214,9 @@ results_w_seeds %>%
   mutate(pct = count/sum(count)) %>%
   arrange(desc(count))
 ```
+
+This result was surprising to me. I expected #1 seeds to win a lot, probably the most, but not over 60% of the time. 
+
 
 #### Championship Game
 
@@ -183,8 +226,12 @@ results_w_seeds %>%
   group_by(Season,WSeed) %>%
   summarise(count = n()) %>%
   spread(key = WSeed, value = count, fill = 0) %>%
-  full_join(.,tibble(`01` = 0,`02` = 0, `03` = 0, `04` = 0, `05` = 0, `06` = 0, `07` = 0, `08` = 0, `09` = 0, `10` = 0, `11` = 0, `12` =0, `13` = 0, `14` = 0, `15` = 0, `16` = 0), by = NULL) %>%
-    replace(.,is.na(.),0) %>%
+  mutate(dummy = 1) %>%
+  coalesce_join(.,
+            tibble(`01` = 0,`02` = 0, `03` = 0, `04` = 0, `05` = 0, `06` = 0, `07` = 0, `08` = 0, `09` = 0, `10` = 0, 
+                   `11` = 0, `12` =0, `13` = 0, `14` = 0, `15` = 0, `16` = 0, dummy = 1),
+            by = "dummy") %>%
+  replace(.,is.na(.),0) %>%
   mutate(championshipgame = paste0(`01`,`02`,`03`,`04`,`05`,`06`,`07`,`08`,`09`,`10`,`11`,`12`,`13`,`14`,`15`,`16`)) %>%
   group_by(championshipgame) %>%
   summarise(count = n()) %>%
@@ -192,7 +239,18 @@ results_w_seeds %>%
   arrange(desc(count))
 ```
 
-The most likely matchup is between a #1 and a #2 seed, followed by two #1 seeds.
+Given that #1 seeds win the tournament over 60% of the time we'd expect them to appear in most championship games. That is indeed the case with at least 1 #1 seed appearing in 7 of the 8 most frequent champsionship games.  
+
+```{r}
+results_w_seeds %>%
+  filter(round == 5) %>%
+  group_by(Season,WSeed) %>%
+  summarise(count = n()) %>%
+  ungroup() %>%
+  group_by(WSeed) %>%
+  summarise(count = n_distinct(Season)) %>%
+  mutate(pct = count/34)
+```
 
 #### Final Four
 
@@ -202,8 +260,12 @@ results_w_seeds %>%
   group_by(Season,WSeed) %>%
   summarise(count = n()) %>%
   spread(key = WSeed, value = count, fill = 0) %>%
-  full_join(.,tibble(`01` = 0,`02` = 0, `03` = 0, `04` = 0, `05` = 0, `06` = 0, `07` = 0, `08` = 0, `09` = 0, `10` = 0, `11` = 0, `12` =0, `13` = 0, `14` = 0, `15` = 0, `16` = 0), by = NULL) %>%
-    replace(.,is.na(.),0) %>%
+  mutate(dummy = 1) %>%
+  coalesce_join(.,
+            tibble(`01` = 0,`02` = 0, `03` = 0, `04` = 0, `05` = 0, `06` = 0, `07` = 0, `08` = 0, `09` = 0, `10` = 0, 
+                   `11` = 0, `12` =0, `13` = 0, `14` = 0, `15` = 0, `16` = 0, dummy = 1),
+            by = "dummy") %>%
+  replace(.,is.na(.),0) %>%
   mutate(finalfour = paste0(`01`,`02`,`03`,`04`,`05`,`06`,`07`,`08`,`09`,`10`,`11`,`12`,`13`,`14`,`15`,`16`)) %>%
   group_by(finalfour) %>%
   summarise(count = n()) %>%
@@ -211,7 +273,20 @@ results_w_seeds %>%
   arrange(desc(count))
 ```
 
-There are 34 years worth of data and 25 distinct distributions of final four teams. I think at this point it becomes difficult to lean one way or another, as the most common Final Four happens less than 10% of the time.
+There are 34 years worth of data and 25 distinct distributions of final four teams. I think at this point it becomes difficult to lean one way or another, as the most common Final Four happens less than 10% of the time. But we can look to 
+
+```{r}
+results_w_seeds %>%
+  filter(round == 4) %>%
+  group_by(Season,WSeed) %>%
+  summarise(count = n()) %>%
+  ungroup() %>%
+  group_by(WSeed) %>%
+  summarise(count = n_distinct(Season)) %>%
+  mutate(pct = count/34)
+```
+
+
 
 ## Distinct Seed Distributions by Round
 
@@ -325,3 +400,4 @@ Next year: expand to looking at conditional distributions. So Conditional on a 1
 [^2]:https://www.ncaa.com/news/basketball-men/bracketiq/2019-03-20/perfect-ncaa-bracket-absurd-odds-march-madness-dream
 [^3]:https://projects.fivethirtyeight.com/2019-march-madness-predictions/
 [^4]:https://www.cbssports.com/college-basketball/news/march-madness-2019-chalk-has-ruled-the-ncaa-tournament-so-far-but-that-sets-up-what-could-be-a-great-sweet-16/
+[^5]:https://alistaire.rbind.io/blog/coalescing-joins/
