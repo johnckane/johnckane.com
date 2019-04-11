@@ -26,7 +26,7 @@ You are not credited for predicting a correct Elite Eight matchup, but by whethe
 
 The data comes from the Kaggle competition for March Madness[^1]. I didn't submit an entry to the contest but used the data for this analysis.
 
-```{r}
+```{r, message=FALSE}
 library(tidyverse)
 library(knitr)
 seeds <- read_csv("/home/john/basketball/march_madness/2019/data/DataFiles/NCAATourneySeeds.csv")
@@ -54,7 +54,7 @@ head(results_w_seeds)
 
 #### Determining which round each game was
 
-The Kaggle data was missing one important piece of information -- which round of the tournment each game was. To solve for this I had to rely on my knowledge of the NCAA tournament. I knew that at some point they started add the "play-in" games on the Tuesday before the first round. Eventually addiontal play-in games were added first on the same Tuesday, then on the Wednesday before the first round. 
+The Kaggle data was missing one important piece of information - which round of the tournment each game was. To solve for this I had to rely on my knowledge of the NCAA tournament. I knew that at some point they started add the "play-in" games on the Tuesday before the first round. Eventually addiontal play-in games were added first on the same Tuesday, then on the Wednesday before the first round. 
 
 Additionally, each round except for Final Four, Championship, and early play-in games take place over two days. 
 
@@ -138,34 +138,26 @@ To represent the different seed distributions I'll concatenate the count of each
 
 So if the Sweet Sixteen has:
 
-* 3 #1 seeds
-* 4 #2 seeds
-* 3 #3 seeds
-* 1 #4 seed
-* 2 #5 seeds
-* 2 #6 seeds
-* 0 #7 seeds
-* 0 #8 seeds
-* 1 #9 seeds
+* 3 1 seeds
+* 4 2 seeds
+* 3 3 seeds
+* 2 4 seed
+* 2 5 seeds
+* 1 6 seeds
+* 0 7 seeds
+* 0 8 seeds
+* 1 9 seeds
 * 0 10, 11, 12, 13, 14, 15, 16 seeds
 
-In the data I'll represent that as `3431220010000000`. 
+In the data I'll represent that as `3432210010000000`. 
 
-#### R Function: coalesce_join
+#### R Functions: `coalesce_join()` and `round_summary()`
 
-A trouble spot in the following analysis is that there are natural 0's in the dataset. For example a 5-seed has never won the championship, so when we go to count and represent the data, we want a `0` to be present.
+A challenge I encountered doing the following the analysis was that not every seed is represented as ever winning in every round. For example, a No. 5 seed has never won the championship, and a No. 16 seed has never appeared in the Sweet Sixteen, among others. As a result when I go to summarise the data those particular combinations don't appear in the data, and I'd like them to appear as `0`.
 
-Coalescing two variables takes the value of that variable from one data frame, but if it is missing will take it from the second. 
+One approach is to use what I call an anchor data frame that contains and then coalesce variables from the data summary dataset to the anchor data frame, so that if a value is absent from the summarized data (no No. 16 seeds in Sweet Sixteen) it will be populated by the value in the anchor dataframe. `dplyr` does have a `coalesce()` function, but you need to write out explicitly which variables you need to coalesce. 
 
-One way to coalesce would be to explicity right out each variable we'd like to coalesce in SQL, e.g.
-
-This can be tedious if there are many variables you need to coalesce. 
-
-`dplyr` does have a `coalesce()` function, but you need to write out explicitly which functions you need to coalesce. 
-
-It would be nice if we could join two tables, and naturally coalesce the columns in both without explicitly coding each one. 
-
-That's what the excellent `coalesce_join` function from Edward Visel's blog does[^5]. I'll be using it a lot in this analysis.
+While not prohibitive, it is tedius to do so for many variables. It would be nice if we could join two tables, and naturally coalesce the columns in both without explicitly coding each one. That's what the excellent `coalesce_join` function from Edward Visel's blog does[^5]. I'll be using it a lot in this analysis.
 
 ```{r}
 coalesce_join <- function(x, y, 
@@ -194,11 +186,12 @@ coalesce_join <- function(x, y,
 }
 ```
 
-#### Champion
+I make use of the `coalesce_join()` function each time I summarise a round of the tournament. Rather than repeat similar code (changing the round we're analzying, and what we want to call the variable) multiple times I've turned that piece of the analysis into a function. This function takes as input a round to analyze, `r`, and a variable name, `varname`, and returns a frequency table of seed distribution in that round. 
 
 ```{r}
-results_w_seeds %>%
-  filter(round == 6) %>%
+round_summary <- function(r,varname){
+  results_w_seeds %>%
+  filter(round == r) %>%
   group_by(Season,WSeed) %>%
   summarise(count = n()) %>%
   spread(key = WSeed, value = count, fill = 0) %>%
@@ -207,89 +200,48 @@ results_w_seeds %>%
             tibble(`01` = 0,`02` = 0, `03` = 0, `04` = 0, `05` = 0, `06` = 0, `07` = 0, `08` = 0, `09` = 0, `10` = 0, 
                    `11` = 0, `12` =0, `13` = 0, `14` = 0, `15` = 0, `16` = 0, dummy = 1),
             by = "dummy") %>%
-  replace(.,is.na(.),0) %>%
-  mutate(champion = paste0(`01`,`02`,`03`,`04`,`05`,`06`,`07`,`08`,`09`,`10`,`11`,`12`,`13`,`14`,`15`,`16`)) %>%
-  group_by(champion) %>%
+  mutate(varname = paste0(`01`,`02`,`03`,`04`,`05`,`06`,`07`,`08`,`09`,`10`,`11`,`12`,`13`,`14`,`15`,`16`)) %>%
+  group_by(varname) %>%
   summarise(count = n()) %>%
-  mutate(pct = count/sum(count)) %>%
-  arrange(desc(count))
+  mutate(pct = paste(round(100*count/sum(count),1),"%")) %>%
+  arrange(desc(count)) %>%
+  kable()
+}
 ```
 
-This result was surprising to me. I expected #1 seeds to win a lot, probably the most, but not over 60% of the time. 
 
+Now, onto the analysis. 
+
+#### Champion
+
+```{r}
+round_summary(6, "champion")
+```
+
+This result was surprising to me. I expected No. 1 seeds to win the most often but not over 60% of the time. A good strategry for filling out a winning bracket would definitely seem to mean picking one of the four No. 1 seds to win unless you had a very good reason for selecting a No. 2 or No. 3 seed. 
 
 #### Championship Game
 
 ```{r}
-results_w_seeds %>%
-  filter(round == 5) %>%
-  group_by(Season,WSeed) %>%
-  summarise(count = n()) %>%
-  spread(key = WSeed, value = count, fill = 0) %>%
-  mutate(dummy = 1) %>%
-  coalesce_join(.,
-            tibble(`01` = 0,`02` = 0, `03` = 0, `04` = 0, `05` = 0, `06` = 0, `07` = 0, `08` = 0, `09` = 0, `10` = 0, 
-                   `11` = 0, `12` =0, `13` = 0, `14` = 0, `15` = 0, `16` = 0, dummy = 1),
-            by = "dummy") %>%
-  replace(.,is.na(.),0) %>%
-  mutate(championshipgame = paste0(`01`,`02`,`03`,`04`,`05`,`06`,`07`,`08`,`09`,`10`,`11`,`12`,`13`,`14`,`15`,`16`)) %>%
-  group_by(championshipgame) %>%
-  summarise(count = n()) %>%
-  mutate(pct = count/sum(count)) %>%
-  arrange(desc(count))
+round_summary(5,"championshipgame")
 ```
 
-Given that #1 seeds win the tournament over 60% of the time we'd expect them to appear in most championship games. That is indeed the case with at least 1 #1 seed appearing in 7 of the 8 most frequent champsionship games.  
-
-```{r}
-results_w_seeds %>%
-  filter(round == 5) %>%
-  group_by(Season,WSeed) %>%
-  summarise(count = n()) %>%
-  ungroup() %>%
-  group_by(WSeed) %>%
-  summarise(count = n_distinct(Season)) %>%
-  mutate(pct = count/34)
-```
+Given that No. 1 seeds win the tournament over 60% of the time we'd expect them to appear in most championship games. That is indeed the case with at least 1 No. 1 seed appearing in 7 of the 8 most frequently occurring champsionship matchups. Selecting a No. 1 and a No. 2 seed or two No. 1 seeds  
 
 #### Final Four
 
 ```{r}
-results_w_seeds %>%
-  filter(round == 4) %>%
-  group_by(Season,WSeed) %>%
-  summarise(count = n()) %>%
-  spread(key = WSeed, value = count, fill = 0) %>%
-  mutate(dummy = 1) %>%
-  coalesce_join(.,
-            tibble(`01` = 0,`02` = 0, `03` = 0, `04` = 0, `05` = 0, `06` = 0, `07` = 0, `08` = 0, `09` = 0, `10` = 0, 
-                   `11` = 0, `12` =0, `13` = 0, `14` = 0, `15` = 0, `16` = 0, dummy = 1),
-            by = "dummy") %>%
-  replace(.,is.na(.),0) %>%
-  mutate(finalfour = paste0(`01`,`02`,`03`,`04`,`05`,`06`,`07`,`08`,`09`,`10`,`11`,`12`,`13`,`14`,`15`,`16`)) %>%
-  group_by(finalfour) %>%
-  summarise(count = n()) %>%
-  mutate(pct = count/sum(count)) %>%
-  arrange(desc(count))
+round_summary(4,"finalfour")
 ```
 
-There are 34 years worth of data and 25 distinct distributions of final four teams. I think at this point it becomes difficult to lean one way or another, as the most common Final Four happens less than 10% of the time. But we can look to 
-
-```{r}
-results_w_seeds %>%
-  filter(round == 4) %>%
-  group_by(Season,WSeed) %>%
-  summarise(count = n()) %>%
-  ungroup() %>%
-  group_by(WSeed) %>%
-  summarise(count = n_distinct(Season)) %>%
-  mutate(pct = count/34)
-```
-
+This was another surprising result to me. There are 34 years worth of data and 25 distinct seed combinations in the Final Four. No single seed combinations happens even 10% of the time so it is hard to make any kind of recommendation, apart from choosing a combination of Nos. 1, 2, and 3 seeds. 
 
 
 ## Distinct Seed Distributions by Round
 
+If the Final Four has 25 distinct seed combinations in 34 years, what about the other rounds?
+
+## START HERE ON FIRDAY
 ```{r}
 results_w_seeds %>%
   filter(round > 0) %>%
@@ -332,7 +284,7 @@ results_w_seeds %>%
 ```
 
 Down the left hand size of this table is the seed #'s, and the columns across the top correpsond to the round of the
-tournament. The table values are the average number of each seed to reach each round of the tournament. So there are on average 4 #1 Seeds in the Round of 32, 3.4 in the Sweet 16, 2.8 in the Elite Eight, 1.6 in the Final Four, 1.0 in the Championship, and is the winner 60% of the time. 
+tournament. The table values are the average number of each seed to reach each round of the tournament. So there are on average 4 No. 1 Seeds in the Round of 32, 3.4 in the Sweet 16, 2.8 in the Elite Eight, 1.6 in the Final Four, 1.0 in the Championship, and is the winner 60% of the time. 
 
 ## 2019 Results
 
@@ -388,12 +340,12 @@ The first two rounds of the tournament were chalky[^3], which lends itself nicel
 I thought that 
 
 The more difficult piece to this is the logical extension of knowing how many of each seed are likely to advance to the next
-round. For example, I know there are on average going to be 2 1 seeds in the Final Four, which 2 1 seeds do I pick?
+round. For example, I know there are on average going to be 2 No. 1 seeds in the Final Four, which 2 No. 1 seeds do I pick?
 
-My approach this year was to use the pre tournament probabilities from 538[^4]. So I selected the 1 seed with the highest pre-tournament probability of winning the championship (Duke, ~28%)
+My approach this year was to use the pre tournament probabilities from 538[^4]. So I selected the No. 1 seed with the highest pre-tournament probability of winning the championship (Duke, ~28%)
 
 
-Next year: expand to looking at conditional distributions. So Conditional on a 1 seed winning the tournament, what is the average distribution. Then conditional on the chosen championship game, what is the average final four. And so on...
+Next year: expand to looking at conditional distributions. So Conditional on a No. 1 seed winning the tournament, what is the average distribution. Then conditional on the chosen championship game, what is the average final four. And so on...
 
 
 [^1]:https://www.kaggle.com/c/mens-machine-learning-competition-2019
