@@ -24,7 +24,7 @@ You are not credited for predicting a correct Elite Eight matchup, but by whethe
 
 ## Data
 
-The data comes from the Kaggle competition for March Madness[^1]. I didn't submit an entry to the contest but used the data for this analysis.
+The data comes from the Kaggle competition for March Madness[^1]. I didn't submit an entry to the contest but used the data for this analysis. There are several datasets included for those competing in the contest, but I'm interested in two of them, one for tournament seeds and one for tournament results. 
 
 ```{r, message=FALSE}
 library(tidyverse)
@@ -34,7 +34,7 @@ results <- read_csv("/home/john/basketball/march_madness/2019/data/DataFiles/NCA
 ```
 
 
-Join the results data with the seed data. 
+Join the results data with the seed data so that we're working with just one dataset. 
 
 ```{r}
 results_w_seeds <- 
@@ -54,13 +54,11 @@ head(results_w_seeds)
 
 #### Determining which round each game was
 
-The Kaggle data was missing one important piece of information - which round of the tournment each game was. To solve for this I had to rely on my knowledge of the NCAA tournament. I knew that at some point they started add the "play-in" games on the Tuesday before the first round. Eventually addiontal play-in games were added first on the same Tuesday, then on the Wednesday before the first round. 
+The Kaggle data was missing one important piece of information - which round of the tournment each game was. To solve for this I had to rely on my knowledge of the NCAA tournament. I knew that at some point they started add the play-in games on the Tuesday before the first round. Eventually addiontal play-in games were added first on the same Tuesday, then on the Wednesday before the first round. Additionally each round except for Final Four, Championship, and first years of the play-in games take place over two days. 
 
-Additionally, each round except for Final Four, Championship, and early play-in games take place over two days. 
+So the first four rounds occur on a total of 8 days, then the fifth and sixth rounds occur on one day each. So that makes 10 total days' worth of games preceding the play-in game era. When you include play-in games in the calculation you arrive at either 11 or 12 days' worth of games, depending on the year. 
 
-So the first four rounds occur on a total of 8 days, then the fifth and sixth rounds occur on one day each, so there are 10 total days worth of games, excluding the play-in games. 
-
-The Kaggle data does provide the day of the season for each game. If I first limit the results to only tournament games, then count how many days since the first tournament game of a give year occurred. 
+The Kaggle data does provide the day of the season for each game, both regular season and tournament. To determine which day of the tournament each game was played on I first determined what the first day of the tournament was, then subtracted the day of each game from that value. 
 
 
 ```{r}
@@ -73,13 +71,12 @@ results_tourney_day <-
   results %>%
   inner_join(season_first_tourney_day, by = 'Season') %>%
   mutate(days_since_first = DayNum - first_day)
-```
 
-
-```{r}
 table(results_tourney_day$days_since_first)
 ```
 
+
+With that knowledge in hand I can count how many distinct days of games each tournament had. 
 
 ```{r}
 results_tourney_day %>%
@@ -87,7 +84,8 @@ results_tourney_day %>%
   summarise(count = n_distinct(days_since_first))
 ```
 
-With this data in hand I can assign rounds to each game based on Season and days since day of the tournament that year. I assign any play-in games to be round "0."
+The above tells me the play-in games were first played in 2001, and the second day of play-in games were added in 2011. Now I can manually code this information into the data. Play-in games are assigned to a round of "0."
+
 
 ```{r}
 results_tourney_day <-
@@ -117,6 +115,7 @@ results_tourney_day <-
 
 ```
 
+Now that the round of each game has been coded I want to determine what the seed was for both the winning and losing team of each game. I can do this in two joins. The first joins the results data with the seed data but only where the winning team id matches the team ID in the seed data. The second join is similar, but done for the losing team.
 
 ```{r}
 results_w_seeds <-
@@ -128,9 +127,11 @@ results_w_seeds <-
              seeds %>% mutate(LSeed = str_sub(Seed,2,3)),
              by = c('Season','LTeamID' = 'TeamID')) %>%
   select(Season,WSeed,LSeed,round)
-head(results_w_seeds)
+
+head(results_w_seeds) %>% kable()
 ```
 
+Now completed with data wrangling we can move onto the analysis!
 
 ## Seed Distributions by Round
 
@@ -155,7 +156,7 @@ In the data I'll represent that as `3432210010000000`.
 
 A challenge I encountered doing the following the analysis was that not every seed is represented as ever winning in every round. For example, a No. 5 seed has never won the championship, and a No. 16 seed has never appeared in the Sweet Sixteen, among others. As a result when I go to summarise the data those particular combinations don't appear in the data, and I'd like them to appear as `0`.
 
-One approach is to use what I call an anchor data frame that contains and then coalesce variables from the data summary dataset to the anchor data frame, so that if a value is absent from the summarized data (no No. 16 seeds in Sweet Sixteen) it will be populated by the value in the anchor dataframe. `dplyr` does have a `coalesce()` function, but you need to write out explicitly which variables you need to coalesce. 
+The approach I default to in these situations is to use what I call an anchor data frame that contains and then coalesce variables from the data summary dataset to the anchor data frame, so that if a value is absent from the summarized data (no No. 16 seeds in Sweet Sixteen) it will be populated by the value in the anchor dataframe. `dplyr` does have a `coalesce()` function, but you need to write out explicitly which variables you need to coalesce. 
 
 While not prohibitive, it is tedius to do so for many variables. It would be nice if we could join two tables, and naturally coalesce the columns in both without explicitly coding each one. That's what the excellent `coalesce_join` function from Edward Visel's blog does[^5]. I'll be using it a lot in this analysis.
 
@@ -186,10 +187,13 @@ coalesce_join <- function(x, y,
 }
 ```
 
-I make use of the `coalesce_join()` function each time I summarise a round of the tournament. Rather than repeat similar code (changing the round we're analzying, and what we want to call the variable) multiple times I've turned that piece of the analysis into a function. This function takes as input a round to analyze, `r`, and a variable name, `varname`, and returns a frequency table of seed distribution in that round. 
+I make use of the `coalesce_join()` function each time I summarise a round of the tournament. Rather than repeat similar code (changing the round we're analzying, and what we want to call the variable) multiple times I've turned that piece of the analysis into a function. This function takes as input a round to analyze, `r`, and a variable name, `varname`, and returns a frequency table of seed distribution in that round. Passing things you want to be used as both a variable name and as a grouping variable later in the analysis chain is challenging. I'm making use of tools in the `rlang` package as well as helpful hints from Edwin Thoen's blog[^6].
 
 ```{r}
 round_summary <- function(r,varname){
+  
+  varname_nm <- quo_name(varname)
+  
   results_w_seeds %>%
   filter(round == r) %>%
   group_by(Season,WSeed) %>%
@@ -200,8 +204,8 @@ round_summary <- function(r,varname){
             tibble(`01` = 0,`02` = 0, `03` = 0, `04` = 0, `05` = 0, `06` = 0, `07` = 0, `08` = 0, `09` = 0, `10` = 0, 
                    `11` = 0, `12` =0, `13` = 0, `14` = 0, `15` = 0, `16` = 0, dummy = 1),
             by = "dummy") %>%
-  mutate(varname = paste0(`01`,`02`,`03`,`04`,`05`,`06`,`07`,`08`,`09`,`10`,`11`,`12`,`13`,`14`,`15`,`16`)) %>%
-  group_by(varname) %>%
+  mutate(!!varname_nm := paste0(`01`,`02`,`03`,`04`,`05`,`06`,`07`,`08`,`09`,`10`,`11`,`12`,`13`,`14`,`15`,`16`)) %>%
+  group_by(!!varname) %>%
   summarise(count = n()) %>%
   mutate(pct = paste(round(100*count/sum(count),1),"%")) %>%
   arrange(desc(count)) %>%
@@ -210,38 +214,38 @@ round_summary <- function(r,varname){
 ```
 
 
-Now, onto the analysis. 
+Now, finally, onto the analysis. 
 
 #### Champion
 
 ```{r}
-round_summary(6, "champion")
+round_summary(6, quo(champion))
 ```
 
-This result was surprising to me. I expected No. 1 seeds to win the most often but not over 60% of the time. A good strategry for filling out a winning bracket would definitely seem to mean picking one of the four No. 1 seds to win unless you had a very good reason for selecting a No. 2 or No. 3 seed. 
+This result was surprising to me. I expected No. 1 seeds to win more than any other seeds, maybe around 50% of the time but not over 60% of the time. A good strategry for filling out a winning bracket would definitely seem to mean picking one of the four No. 1 seds to win unless you had a very good reason for selecting a No. 2 or No. 3 seed. 
 
 #### Championship Game
 
 ```{r}
-round_summary(5,"championshipgame")
+round_summary(5,quo(championshipgame))
 ```
 
-Given that No. 1 seeds win the tournament over 60% of the time we'd expect them to appear in most championship games. That is indeed the case with at least 1 No. 1 seed appearing in 7 of the 8 most frequently occurring champsionship matchups. Selecting a No. 1 and a No. 2 seed or two No. 1 seeds  
+Given that No. 1 seeds win the tournament over 60% of the time we'd expect them to appear in most championship games. That is indeed the case with at least 1 No. 1 seed appearing in 7 of the 8 most frequently occurring champsionship matchups. Selecting a No. 1 and a No. 2 seed or two No. 1 seeds has occurred just under 50% of the time.
 
 #### Final Four
 
 ```{r}
-round_summary(4,"finalfour")
+round_summary(4,quo(finalfour))
 ```
 
 This was another surprising result to me. There are 34 years worth of data and 25 distinct seed combinations in the Final Four. No single seed combinations happens even 10% of the time so it is hard to make any kind of recommendation, apart from choosing a combination of Nos. 1, 2, and 3 seeds. 
 
+Given that the Final Four doesn't isn't amenable to a tidy analysis like I had hoped, I have very little hope for earlier rounds. To test this I'll look at how many distinct distributions of seeds there has been in each round. 
 
 ## Distinct Seed Distributions by Round
 
-If the Final Four has 25 distinct seed combinations in 34 years, what about the other rounds?
+If the Final Four has 25 distinct seed combinations in 34 years, what about the other rounds? Here I'll count 
 
-## START HERE ON FIRDAY
 ```{r}
 results_w_seeds %>%
   filter(round > 0) %>%
@@ -256,18 +260,18 @@ results_w_seeds %>%
             distinct_dist = n_distinct(seed_dist))
 ```
 
-I knew that there are seemingly infinite[^2] number of possible brackets, but I also thought that by collapsing the data into respective seeds that it would reduce some of that complexity. 
+I knew that there are seemingly infinite[^2] number of possible brackets, but I also thought that by collapsing the data into respective seeds that it would reduce some of that complexity. After summarzing the data in the table above, from 1985-2018 there has never been a repeat seed distribution in either the first or second round of the tournament! The Sweet Sixteen and Elite Eight also have had only 9 and 3, respectively, non-duplicate values.
 
-Summarizing the above table, from 1985-2018 there has never been a repeat seed distribution in either the first or second round of the tournament! That was really surprising to me. 
-
-The Sweet Sixteen and Elite Eight also have 9 and 3, respectively, non-duplicate values. 
-
+The data has laid waste to by intended analysis and bracket strategy. Rather than looking at the actual seed distributions for each round I'll need to summarize those distributions. 
 
 ## Average Seed Distribution by Round
 
 Since it isn't helpful to look at the actual distributions and their frequencies by round, we can summarize those distributions by taking the average. 
 
-```{r}
+
+CLEAN UP THIS ANALYSIS
+
+```{r, warning = FALSE}
 results_w_seeds %>%
   filter(round > 0) %>%
   group_by(Season,round,WSeed) %>%
@@ -336,7 +340,6 @@ How did the 2019 tournament play out with respect to these averages? Read on bel
 
 The first two rounds of the tournament were chalky[^3], which lends itself nicely to using long run averages, as over that timeframe the higher seeds are generally better teams and happen to win. 
 
-
 I thought that 
 
 The more difficult piece to this is the logical extension of knowing how many of each seed are likely to advance to the next
@@ -353,3 +356,4 @@ Next year: expand to looking at conditional distributions. So Conditional on a N
 [^3]:https://projects.fivethirtyeight.com/2019-march-madness-predictions/
 [^4]:https://www.cbssports.com/college-basketball/news/march-madness-2019-chalk-has-ruled-the-ncaa-tournament-so-far-but-that-sets-up-what-could-be-a-great-sweet-16/
 [^5]:https://alistaire.rbind.io/blog/coalescing-joins/
+[^6]:https://edwinth.github.io/blog/dplyr-recipes/
