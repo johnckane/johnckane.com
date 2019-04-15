@@ -13,48 +13,32 @@ categories:
 - R
 ---
 
-Working backwards through the NCAA tournament
+Most years filling out my bracket I work forwards through the games, meaning I start by picking first round games, then using an ever dwindling pool of teams, proceed all the way through selecting a Final Four and eventually a champion. That strategy has rarely paid off for me in bracket pools as I'm hardly competitive beyond the first two rounds.
 
-Most years filling out my bracket I work "forwards"
+The most points in bracket pools are scored in later rounds, so it doesn't make a lot of sense to limit your choices based on choices made in earlier rounds. So this year I wanted to try something different, informed by data. I wanted to fill out the bracket backwards, meaning select a champion first, then choose a championship matchup (that includes the champion), then choose a Final Four and so on to selecting the winners in the round of 32. I want to use data to inform each of those selections.
 
-The traditional office pool works differently than the Kaggle competition for March Madness. In the office pool you typically choose the winner of each game and accumulate an increasing number of points for each correct pick. In the Kaggle competition you compete by determining a probabilistic evaluation of every possible matchup, and are then judged on how well calibrated the outcome was to your forecast. 
 
-You are not credited for predicting a correct Elite Eight matchup, but by whether or not the matchup that occurs you have a good forecast for.
-
+Last year I did an entire post on picking first round upsets[^7], analyzing how common each upset was and how many total we could expect. A natural extension to that analysis is to look at every round, not just the first. This analysis looks at every round of the tournament, but starting with the last round, the champion, rather than the first round. I want to determine, based on seeds, what the most likely outcomes for each round are. What seed combinations appear most frequently in the Sweet Sixteen or Elite Eight? Read on to find out and see how I got there using data.
 
 ## Data
 
-The data comes from the Kaggle competition for March Madness[^1]. I didn't submit an entry to the contest but used the data for this analysis. There are several datasets included for those competing in the contest, but I'm interested in two of them, one for tournament seeds and one for tournament results. 
+The data comes from the Kaggle competition for March Madness[^1]. I didn't submit an entry to the contest but used the data for this analysis. There are several datasets included for those competing in the contest, but I'm interested in just two of them, one for tournament seeds and one for tournament results. 
+
+```{r, echo = FALSE, include = FALSE}
+data_path <- "/home/john/basketball/march_madness/2019/data/DataFiles/"
+```
+
 
 ```{r, message=FALSE}
 library(tidyverse)
 library(knitr)
-seeds <- read_csv("/home/john/basketball/march_madness/2019/data/DataFiles/NCAATourneySeeds.csv")
-results <- read_csv("/home/john/basketball/march_madness/2019/data/DataFiles/NCAATourneyCompactResults.csv")
+seeds <- read_csv(paste0(data_path,"NCAATourneySeeds.csv"))
+results <- read_csv(paste0(data_path,"NCAATourneyCompactResults.csv"))
 ```
-
-
-Join the results data with the seed data so that we're working with just one dataset. 
-
-```{r}
-results_w_seeds <- 
-  inner_join(results %>% select(Season,WTeamID,LTeamID),
-             seeds %>% mutate(WSeed = str_sub(Seed,2,3)),
-             by = c('Season','WTeamID' = 'TeamID')) %>%
-  inner_join(.,
-             seeds %>% mutate(LSeed = str_sub(Seed,2,3)),
-             by = c('Season','LTeamID' = 'TeamID')) %>%
-  mutate(matchup = paste0(pmin(WSeed,LSeed),"-",pmax(WSeed,LSeed))) %>%
-  select(Season,WSeed,LSeed,matchup)
-
-head(results_w_seeds)
-```
-
-
 
 #### Determining which round each game was
 
-The Kaggle data was missing one important piece of information - which round of the tournment each game was. To solve for this I had to rely on my knowledge of the NCAA tournament. I knew that at some point they started add the play-in games on the Tuesday before the first round. Eventually addiontal play-in games were added first on the same Tuesday, then on the Wednesday before the first round. Additionally each round except for Final Four, Championship, and first years of the play-in games take place over two days. 
+The Kaggle data was missing one important piece of information - which round of the tournment each game was. To solve for this I had to rely on my knowledge of the NCAA tournament. I knew that at some point in the last 15 years or so the tournament added the play-in games on the Tuesday before the first round. Eventually addiontal play-in games were added first on the same Tuesday, then on the Wednesday before the first round. Additionally each round except for Final Four, Championship, and first years of the play-in games take place over two days. 
 
 So the first four rounds occur on a total of 8 days, then the fifth and sixth rounds occur on one day each. So that makes 10 total days' worth of games preceding the play-in game era. When you include play-in games in the calculation you arrive at either 11 or 12 days' worth of games, depending on the year. 
 
@@ -71,17 +55,23 @@ results_tourney_day <-
   results %>%
   inner_join(season_first_tourney_day, by = 'Season') %>%
   mutate(days_since_first = DayNum - first_day)
-
-table(results_tourney_day$days_since_first)
 ```
 
+With Day 0 now coded as the first day of the tournament we can see how many different values there were for each game:
+```{r}
+table(results_tourney_day$days_since_first)
+```
 
 With that knowledge in hand I can count how many distinct days of games each tournament had. 
 
 ```{r}
 results_tourney_day %>%
   group_by(Season) %>%
-  summarise(count = n_distinct(days_since_first))
+  summarise(count = n_distinct(days_since_first)) %>%
+  ungroup() %>%
+  group_by(count) %>%
+  summarize(Seasons = paste(Season,collapse = ", ")) %>%
+  kable()
 ```
 
 The above tells me the play-in games were first played in 2001, and the second day of play-in games were added in 2011. Now I can manually code this information into the data. Play-in games are assigned to a round of "0."
@@ -281,14 +271,12 @@ results_w_seeds %>%
   select(-Season) %>%
   group_by(round) %>%
   summarise_if(is_numeric,mean,na.rm = TRUE) %>%
-  t() %>%
-  round(1) %>%
-  `colnames<-`(c("Round of 32","Sweet 16","Elite 8","Final Four","Championship Game","Champion")) %>%
+  mutate_if(is_numeric,round,1) %>%
   kable()
 ```
 
-Down the left hand size of this table is the seed #'s, and the columns across the top correpsond to the round of the
-tournament. The table values are the average number of each seed to reach each round of the tournament. So there are on average 4 No. 1 Seeds in the Round of 32, 3.4 in the Sweet 16, 2.8 in the Elite Eight, 1.6 in the Final Four, 1.0 in the Championship, and is the winner 60% of the time. 
+#### Creating recomendations from these averages
+
 
 ## 2019 Results
 
@@ -340,8 +328,6 @@ How did the 2019 tournament play out with respect to these averages? Read on bel
 
 The first two rounds of the tournament were chalky[^3], which lends itself nicely to using long run averages, as over that timeframe the higher seeds are generally better teams and happen to win. 
 
-I thought that 
-
 The more difficult piece to this is the logical extension of knowing how many of each seed are likely to advance to the next
 round. For example, I know there are on average going to be 2 No. 1 seeds in the Final Four, which 2 No. 1 seeds do I pick?
 
@@ -357,3 +343,4 @@ Next year: expand to looking at conditional distributions. So Conditional on a N
 [^4]:https://www.cbssports.com/college-basketball/news/march-madness-2019-chalk-has-ruled-the-ncaa-tournament-so-far-but-that-sets-up-what-could-be-a-great-sweet-16/
 [^5]:https://alistaire.rbind.io/blog/coalescing-joins/
 [^6]:https://edwinth.github.io/blog/dplyr-recipes/
+[^7}:https://www.johnckane.com/blog/ncaa-first-round-upsets/
