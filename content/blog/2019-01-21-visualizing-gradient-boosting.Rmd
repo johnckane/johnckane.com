@@ -248,13 +248,13 @@ Hyperparameter tuning and model selection is not the focus of this post, but sev
 sessionInfo()
 ```
 
-[^1]: Goldbloom, Anthony. ["What algorithms are most successful on Kaggle?"](https://www.kaggle.com/antgoldbloom/what-algorithms-are-most-successful-on-kaggle). Retrieved April 1, 2019. 
+[^1]:Goldbloom, Anthony. ["What algorithms are most successful on Kaggle?"](https://www.kaggle.com/antgoldbloom/what-algorithms-are-most-successful-on-kaggle). Retrieved April 1, 2019. 
 
-[^2]: Charpenter, Arthur (June 26, 2015). ["An Attempt to Understand Boosting Algorithms"](https://freakonometrics.hypotheses.org/19874.Retrieved). _Freakonometrics_. April 1, 2019. 
+[^2]:Charpenter, Arthur (June 26, 2015). ["An Attempt to Understand Boosting Algorithms"](https://freakonometrics.hypotheses.org/19874.Retrieved). _Freakonometrics_. April 1, 2019. 
 
-[^3]: James, Gareth Michael., et al. An Introduction to Statistical Learning with Applications in R. Springer, 2013.
+[^3]:James, Gareth Michael., et al. An Introduction to Statistical Learning with Applications in R. Springer, 2013.
 
-[^4]: Peterson, Thomas Lin (August 17, 2018). ["Animation Composition"](https://github.com/thomasp85/gganimate/wiki/Animation-Composition). Retrieved April 1, 2019. 
+[^4]:Peterson, Thomas Lin (August 17, 2018). ["Animation Composition"](https://github.com/thomasp85/gganimate/wiki/Animation-Composition). Retrieved April 1, 2019. 
 
 
 
