@@ -13,9 +13,11 @@ categories:
 - R
 ---
 
-Most years filling out my NCAA Tournament bracket I work forwards through the games, picking first round games, then using an ever dwindling pool of teams proceed all the way through to selecting a champion. The later round games are worth more points in bracket pools, so you can really hinder your prospects of winning if you don't at least have an eye on the later rounds of the tournament early on. This year I wanted to try something different, more informed by data. I went about filling out the bracket backwards, starting with a champion, then selecting a championship game (that includes the champion of course), then choose a Final Four (that includes both teams in the championship game) and so on to selecting the winners of the first round games. 
+Most years filling out my NCAA Tournament bracket I work forwards through the games, picking the first round games then, using an ever dwindling pool of teams, proceed all the way through to selecting a champion. The later round games are worth more points in bracket pools so you can really hinder your prospects of winning if you don't at least have an eye on the later rounds of the tournament early on. I rarely did, and often was competitive beyond the Sweet Sixteen. 
 
-Last year I did an entire post analyzing how common each upset was by matchup in the first round[^1]. This analysis looks at every round of the tournament, but starting with the last round, the champion, rather than the first round. I want to determine, based on seeds, what the most likely seed distributions are in each round. 
+This year I wanted to try something different. I went about filling out the bracket backwards, starting with a champion, then selecting a championship game (that includes the champion of course), then choose a Final Four (that includes both teams in the championship game) and so on to selecting the winners of the first round games. Unlike most years' brackets I was going to make these decisions informed by data.  
+
+Last year I did an entire post analyzing how common each upset was by matchup in the first round[^1]. This analysis looks at every round of the tournament, but starting with the last round, the champion, rather than the first round. I want to determine what the seed distributions are in each round to inform my selections. 
 
 ## Data
 
@@ -33,9 +35,17 @@ seeds <- read_csv(paste0(data_path,"NCAATourneySeeds.csv"))
 results <- read_csv(paste0(data_path,"NCAATourneyCompactResults.csv"))
 ```
 
+```{r}
+head(seeds) %>% kable()
+```
+
+```{r}
+head(results) %>% kable()
+```
+
 #### Determining which round each game was
 
-The Kaggle data was missing one important piece of information - which round of the tournment each game was. To solve for this I had to rely on my knowledge of the NCAA tournament. I knew that at some point in the last 15 years or so the tournament added the play-in games on the Tuesday before the first round. Eventually additional play-in games were added first on the same Tuesday, then on the Wednesday before the first round. Additionally each round except for Final Four, Championship, and first years of the play-in games take place over two days. 
+The Kaggle data was missing one important piece of information - the round of each game of the tournament. To solve for this I had to rely on my knowledge of the NCAA tournament. I knew that at some point in the last 15 years or so the tournament added the play-in games on the Tuesday before the first round. Eventually additional play-in games were added on the same Tuesday, then additional games on the Wednesday before the first round. Each round except for Final Four, Championship, and first years of the play-in games take place over two days. 
 
 So the first four rounds occur on a total of 8 days, then the fifth and sixth rounds occur on one day each. So that makes 10 total days' worth of games preceding the play-in game era. When you include play-in games in the calculation you arrive at either 11 or 12 days' worth of games, depending on the year. 
 
@@ -59,7 +69,7 @@ With the first day of the tournament coded as 0, we can see the distribution of 
 table(results_tourney_day$days_since_first)
 ```
 
-I can count how many distinct days of games each tournament had. 
+I can also count how many distinct days of games each tournament had. 
 
 ```{r}
 results_tourney_day %>%
@@ -71,10 +81,7 @@ results_tourney_day %>%
   kable()
 ```
 
-The above two pieces of information tell me on which day of the tournament each game was, and how many total games there are by year. Before play-in games days 0 and 1 were first round games. But with the advent of play-in games days 2 and 3 become first round games. All other day/round assignments spring from that information.
-
-tells me the play-in games were first played in 2001, and the second day of play-in games were added in 2011. I will manually code this information into the data. Play-in games are assigned to a round of "0."
-
+The above two pieces of information tell me on which day of the tournament each game was, and how many total games there are by year. Before play-in games days 0 and 1 were first round games. But with the advent of play-in games days 2 and 3 become first round games. All other day/round assignments follow from that information.
 
 ```{r}
 results_tourney_day <-
@@ -125,7 +132,7 @@ Now completed with data wrangling we can move onto the analysis!
 
 ## Seed Distributions by Round
 
-To represent the different seed distributions I'll concatenate the count of each seed in that round together.
+To represent the different seed combinations I'll concatenate the count of each seed in that round together.
 
 So if the Sweet Sixteen has:
 
@@ -146,9 +153,7 @@ In the data I'll represent that as `3432210010000000`.
 
 A challenge I encountered doing the analysis was that not every seed is represented as ever winning in every round. For example, a No. 5 seed has never won the championship, and a No. 16 seed has never appeared in the Sweet Sixteen, among others. As a result when I go to summarise the data those particular combinations don't appear in the data, and I'd like them to appear as `0`.
 
-The approach I take in these situations is to use what I call an anchor data frame that contains the value I'd like populated in the dataset for every combination of identifying levels. By joining an anchor dataset to a dataset with withng from a dataset joining the dataset to the anchor data frame, so that if a value is absent from the summarized data (No. 16 seeds in Sweet Sixteen) it will be populated by the value in the anchor dataframe. `dplyr` does have a `coalesce()` function, but you need to write out explicitly which variables to coalesce. 
-
-While not prohibitive, it is tedius to do so for many variables. It would be nice if we could join two tables, and naturally coalesce the columns in both without explicitly coding each one. That's what the excellent `coalesce_join` function from Edward Visel's blog does[^3]. I'll be using it a lot in this analysis.
+The approach I take in these situations is to use what I call an anchor data frame that contains the value I'd like populated in the summary dataset for every combination of identifying levels if it is missing from the summary dataset. `dplyr` does have a `coalesce()` function, but you need to write out explicitly which variables to coalesce. While not prohibitive it is tedius to do so for many variables. It would be nice if we could join two tables and naturally coalesce the columns in both without explicitly coding each one. That's what the excellent `coalesce_join()` function from Edward Visel's blog does[^3]. I'll be using it a lot in this analysis.
 
 ```{r}
 coalesce_join <- function(x, y, 
@@ -177,7 +182,7 @@ coalesce_join <- function(x, y,
 }
 ```
 
-I make use of the `coalesce_join()` function each time I summarise a round of the tournament. Rather than repeat similar code (changing the round we're analzying, and what we want to call the variable) multiple times I've turned that piece of the analysis into a function. This function takes as input a round to analyze, `r`, and a variable name, `varname`, and returns a frequency table of seed distribution in that round. Passing things you want to be used as both a variable name and as a grouping variable later in the analysis chain is challenging. I'm making use of tools in the `rlang` package as well as helpful hints from Edwin Thoen's blog[^4].
+I make use of the `coalesce_join()` function each time I summarise a round of the tournament. Rather than repeat similar code (changing the round we're analzying, and what we want to call the variable) multiple times I've turned that piece of the analysis into a function. This function takes as input a round to analyze, `r`, and a variable name, `varname`, and returns a frequency table of seed combinations in that round. Passing things you want to be used as both a variable name and as a grouping variable later in the analysis chain is challenging. I'm making use of tools in the `rlang` package as well as helpful hints from Edwin Thoen's blog[^4].
 
 ```{r}
 round_summary <- function(r,varname){
@@ -230,9 +235,9 @@ round_summary(4,quo(finalfour))
 
 This was another surprising result to me. There are 34 years worth of data and 25 distinct seed combinations in the Final Four. No single seed combinations happens even 10% of the time so it is hard to make any kind of recommendation, apart from choosing a combination of Nos. 1, 2, and 3 seeds. 
 
-Given that the Final Four isn't amenable to a tidy analysis like I had hoped, I have very little hope for earlier rounds. To test this I'll look at how many distinct distributions of seeds there has been in each round. 
+Given that the Final Four isn't amenable to a tidy analysis like I had hoped, I have very little hope for earlier rounds. To test this I'll look at how many distinct combinations of seeds there have been in each round.  
 
-## Distinct Seed Distributions by Round
+## Distinct Seed Combinations by Round
 
 
 ```{r}
@@ -247,17 +252,19 @@ results_w_seeds %>%
   group_by(round) %>%
   summarise(years = n(),
             distinct_dist = n_distinct(seed_dist)) %>%
+  arrange(desc(round)) %>%
   mutate(round = case_when(round == 1 ~ "Round of 32",
                            round == 2 ~ "Sweet 16",
                            round == 3 ~ "Elite Eight",
                            round == 4 ~ "Final Four",
-                           round =))
+                           round == 5 ~ "Championship Game",
+                           round == 6 ~ "Champion")) %>%
   kable()
 ```
 
-I knew that there are seemingly infinite[^5] number of possible brackets, but I also thought that by collapsing the data into respective seeds that it would reduce some of that complexity. After summarzing the data in the table above, from 1985-2018 there has never been a repeat seed distribution in either the first or second round of the tournament! The Sweet Sixteen and Elite Eight also have had only 9 and 3, respectively, non-duplicate values.
+I knew that there are seemingly infinite[^5] number of possible brackets, but I also thought that by collapsing the data into respective seeds that it would reduce some of that complexity. After summarzing the data in the table above, from 1985-2018 there has never been a repeat seed combination in either the first or second round of the tournament! The Sweet Sixteen and Elite Eight also have had only 9 and 3, respectively, non-duplicate values.
 
-The data has laid waste to by intended analysis and bracket strategy. Rather than looking at the actual seed distributions for each round I'll need to summarize those distributions. 
+The data has laid waste to by intended analysis and bracket strategy. Rather than looking at the frequencies of seed combinations for each round I'll need to summarize the data. 
 
 ## Average Seed Distribution by Round
 
@@ -272,43 +279,39 @@ results_w_seeds %>%
   group_by(round) %>%
   summarise_if(is_numeric,mean,na.rm = TRUE) %>%
   mutate_if(is_numeric,round,1) %>%
+  arrange(desc(round)) %>%
+  mutate(round = case_when(round == 1 ~ "Round of 32",
+                           round == 2 ~ "Sweet 16",
+                           round == 3 ~ "Elite Eight",
+                           round == 4 ~ "Final Four",
+                           round == 5 ~ "Championship Game",
+                           round == 6 ~ "Champion")) %>%
   kable()
 ```
 
 #### Creating recomendations from these averages
 
+The decimal values in the above table allow for some interpretation, but here is one such configuration of recommendations based on the averages. Here I'll denote the number and seed of the recommendations as NxA/B/C, meaning choose N teams from a pool of A, B, and C seeds. 
+
+| Round           |Recommendation                                                                 |
+|-----------------|-------------------------------------------------------------------------------|
+|Champion         | 1x1                                                                           |
+|Championship Game| 1x1, 1x2/3                                                                    |
+|Final Four       | 2x1, 1x2, 1x3/4                                                               |
+|Elite Eight      | 3x1, 2x2, 1x3, 1x4, 1x5/6/7/8/9/10/11                                         |
+|Sweet Sixteen    | 3x1, 3x2, 2x3, 2x4, 1x5, 1x6, 1x7, 1x8/9, 1x10, 1x11, 1x12                    |
+|Round of 32      | 4x1, 4x2, 3x3, 3x4, 3x5, 3x6, 3x7, 2x8, 2x9, 1x10, 1x11, 1x12, 1x13, 1x14,1x14|  
 
 ## 2019 Results
 
-How did the 2019 tournament play out with respect to these averages? Read on below...
+How did the 2019 tournament play out with respect to these averages and recommendations? Read on below...
 
-#### Round of 32
-
-| Seed   | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 |
-|--------|---|---|---|---|---|---|---|---|---|----|----|----|----|----|----|----|
-| Average|4.0|3.8|3.4|3.2|2.6|2.5|2.5|2.0|2.0|1.5 |1.5 | 1.4|0.8 |0.6 |0.2 | 0.0|
-| 2019   | 4 | 4 | 4 | 3 | 1 | 3 | 1 | 0 | 4 | 3  |  1 |  3 |  1 |  0 |  0 | 0  |
-
-#### Sweet 16
+#### Champion
 
 | Seed   | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 |
 |--------|---|---|---|---|---|---|---|---|---|----|----|----|----|----|----|----|
-| Average|3.4|2.5|2.1|1.9|1.4|1.2|0.8|0.4|0.2|0.7 |0.6 | 0.6|0.2 | 0.1| 0.0|0.0 |
-| 2019   | 4 | 4 | 4 | 2 | 1 | 0 | 0 | 0 | 0 | 0  | 0  | 0  |  0 |  0 |  0 |  0 |
-
-#### Elite 8
-
-| Seed   | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 |
-|--------|---|---|---|---|---|---|---|---|---|----|----|----|----|----|----|----|
-| Average|2.8|1.8|1.0|0.6|0.2|0.4|0.3|0.2|0.1|0.2 |0.2 | 0.6|0.0 | 0.0| 0.0|0.0 |
-| 2019   | 3 | 2 | 2 | 0 | 1 | 0 | 0 | 0 | 0 | 0  |  0 |  0 |  0 |  0 |  0 |  0 |
-
-#### Final Four
-
-| Seed   | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 |
-|--------|---|---|---|---|---|---|---|---|---|----|----|----|----|----|----|----|
-| Average|1.6|0.8|0.5|0.4|0.2|0.1|0.1|0.1|0.0|0.0 |0.1 |0.0 |0.0 |0.0 |0.0 |0.0 |
-| 2019   | 1 | 1 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0  |  0 |  0 |  0 |  0 |  0 |  0 |
+| Average|0.6|0.1|0.1|0.0|0.0|0.0|0.0|0.0|0.0|0.0 |0.0 |0.0 |0.0 |0.0 |0.0 |0.0 | 
+| 2019   | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0  |  0 |  0 |  0 |  0 |  0 |  0 | 
 
 #### Championship Game
 
@@ -317,12 +320,32 @@ How did the 2019 tournament play out with respect to these averages? Read on bel
 | Average|1.0|0.4|0.3|0.1|0.1|0.1|0.0|0.1|0.0|0.0 |0.0 |0.0 | 0.0|0.0 |0.0 |0.0 |
 | 2019   | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0  |  0 |  0 |  0 |  0 |  0 |  0 |
 
-#### Champion
+#### Final Four
 
 | Seed   | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 |
 |--------|---|---|---|---|---|---|---|---|---|----|----|----|----|----|----|----|
-| Average|0.6|0.1|0.1|0.0|0.0|0.0|0.0|0.0|0.0|0.0 |0.0 |0.0 |0.0 |0.0 |0.0 |0.0 | 
-| 2019   | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0  |  0 |  0 |  0 |  0 |  0 |  0 | 
+| Average|1.6|0.8|0.5|0.4|0.2|0.1|0.1|0.1|0.0|0.0 |0.1 |0.0 |0.0 |0.0 |0.0 |0.0 |
+| 2019   | 1 | 1 | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0  |  0 |  0 |  0 |  0 |  0 |  0 |
+
+#### Elite 8
+
+| Seed   | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 |
+|--------|---|---|---|---|---|---|---|---|---|----|----|----|----|----|----|----|
+| Average|2.8|1.8|1.0|0.6|0.2|0.4|0.3|0.2|0.1|0.2 |0.2 | 0.6|0.0 | 0.0| 0.0|0.0 |
+| 2019   | 3 | 2 | 2 | 0 | 1 | 0 | 0 | 0 | 0 | 0  |  0 |  0 |  0 |  0 |  0 |  0 |
+
+#### Sweet 16
+
+| Seed   | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 |
+|--------|---|---|---|---|---|---|---|---|---|----|----|----|----|----|----|----|
+| Average|3.4|2.5|2.1|1.9|1.4|1.2|0.8|0.4|0.2|0.7 |0.6 | 0.6|0.2 | 0.1| 0.0|0.0 |
+| 2019   | 4 | 4 | 4 | 2 | 1 | 0 | 0 | 0 | 0 | 0  | 0  | 0  |  0 |  0 |  0 |  0 |
+
+#### Round of 32
+|Seed    | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 |
+|--------|---|---|---|---|---|---|---|---|---|----|----|----|----|----|----|----|
+| Average|4.0|3.8|3.4|3.2|2.6|2.5|2.5|2.0|2.0|1.5 |1.5 | 1.4|0.8 |0.6 |0.2 | 0.0|
+| 2019   | 4 | 4 | 4 | 3 | 1 | 3 | 1 | 0 | 4 | 3  |  1 |  3 | 1  | 0  |  0 |  0 | 
 
 ## Closing Thoughts
 
@@ -333,18 +356,23 @@ round. For example, I know there are on average going to be 2 No. 1 seeds in the
 
 My approach this year was to use the pre tournament probabilities from 538[^4]. So I selected the No. 1 seed with the highest pre-tournament probability of winning the championship (Duke, ~28%)
 
+The descending nature of the averages indicate
+
 
 Next year: expand to looking at conditional distributions. So Conditional on a No. 1 seed winning the tournament, what is the average distribution. Then conditional on the chosen championship game, what is the average final four. And so on...
 
 
 
-[^1]:https://www.johnckane.com/blog/ncaa-first-round-upsets/
+[^1]:Kane, John (April 8, 2018). ["NCAA Men's Tournament First Round Upsets"](https://www.johnckane.com/blog/ncaa-first-round-upsets/) Retrieved April 17, 2019. 
 [^2]:https://www.kaggle.com/c/mens-machine-learning-competition-2019
 [^3]:https://alistaire.rbind.io/blog/coalescing-joins/
 [^4]:https://edwinth.github.io/blog/dplyr-recipes/
 [^5]:https://www.ncaa.com/news/basketball-men/bracketiq/2019-03-20/perfect-ncaa-bracket-absurd-odds-march-madness-dream
 [^6]:https://www.cbssports.com/college-basketball/news/march-madness-2019-chalk-has-ruled-the-ncaa-tournament-so-far-but-that-sets-up-what-could-be-a-great-sweet-16/
 [^6]:https://projects.fivethirtyeight.com/2019-march-madness-predictions/
+
+
+
 
 
 
