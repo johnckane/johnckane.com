@@ -1,8 +1,8 @@
 ---
-title: "Round by Round Seed Distribution in NCAA Tournament"
+title: "Round by Round Seed Combinations in NCAA Tournament"
 author: "John Kane"
-date: '2019-04-02'
-slug: round-by-round-seed-distribution-in-ncaa-tournament
+date: '2019-04-18'
+slug: round-by-round-seed-combinations-in-ncaa-tournament
 tags:
 - basketball
 - March Madness
@@ -13,11 +13,11 @@ categories:
 - R
 ---
 
-Most years filling out my NCAA Tournament bracket I work forwards through the games, picking the first round games then, using an ever dwindling pool of teams, proceed all the way through to selecting a champion. The later round games are worth more points in bracket pools so you can really hinder your prospects of winning if you don't at least have an eye on the later rounds of the tournament early on. I rarely did, and often was competitive beyond the Sweet Sixteen. 
+Most years filling out my NCAA Tournament bracket I work forwards through the games. I select the winners of the first round games then, using an ever dwindling pool of teams, proceed all the way through to selecting a champion. The later round games are worth more points in bracket pools so you can really hinder your prospects of winning if you don't at least have an eye on the later rounds of the tournament early on. I rarely did, and often wasn't competitive beyond the Sweet Sixteen. 
 
-This year I wanted to try something different. I went about filling out the bracket backwards, starting with a champion, then selecting a championship game (that includes the champion of course), then choose a Final Four (that includes both teams in the championship game) and so on to selecting the winners of the first round games. Unlike most years' brackets I was going to make these decisions informed by data.  
+This year I wanted to try something different. I went about filling out the bracket backwards, starting with a champion, then selecting a championship game (that includes the champion of course), then choosing a Final Four (that includes both teams in the championship game) and so on to selecting the winners of the first round games. Unlike most years' brackets I was going to make these decisions informed by data, rather than my instincts as a sports fan. 
 
-Last year I did an entire post analyzing how common each upset was by matchup in the first round[^1]. This analysis looks at every round of the tournament, but starting with the last round, the champion, rather than the first round. I want to determine what the seed distributions are in each round to inform my selections. 
+Last year I did an entire post analyzing how common each upset was by matchup in the first round[^1]. This analysis looks at every round of the tournament, but starting with the last round, the champion, rather than the first round. I want to determine what the distribution of seed combinations are in each round to inform my selections. 
 
 ## Data
 
@@ -36,16 +36,13 @@ results <- read_csv(paste0(data_path,"NCAATourneyCompactResults.csv"))
 ```
 
 ```{r}
-head(seeds) %>% kable()
+glimpse(seeds)
+glimpse(results)
 ```
 
-```{r}
-head(results) %>% kable()
-```
+#### Determining rounds for games
 
-#### Determining which round each game was
-
-The Kaggle data was missing one important piece of information - the round of each game of the tournament. To solve for this I had to rely on my knowledge of the NCAA tournament. I knew that at some point in the last 15 years or so the tournament added the play-in games on the Tuesday before the first round. Eventually additional play-in games were added on the same Tuesday, then additional games on the Wednesday before the first round. Each round except for Final Four, Championship, and first years of the play-in games take place over two days. 
+The Kaggle data was missing one important piece of information - the round of each game . To solve for this I had to rely on my knowledge of the NCAA tournament. I knew that at some point in the last 15 years or so the tournament added the play-in games on the Tuesday before the first round. Eventually additional play-in games were added on the same Tuesday, then additional games on the Wednesday before the first round. Each round except for Final Four, Championship, and first years of the play-in games take place over two days. 
 
 So the first four rounds occur on a total of 8 days, then the fifth and sixth rounds occur on one day each. So that makes 10 total days' worth of games preceding the play-in game era. When you include play-in games in the calculation you arrive at either 11 or 12 days' worth of games, depending on the year. 
 
@@ -130,11 +127,11 @@ head(results_w_seeds) %>% kable()
 
 Now completed with data wrangling we can move onto the analysis!
 
-## Seed Distributions by Round
+## Seed Combinations by Round
 
 To represent the different seed combinations I'll concatenate the count of each seed in that round together.
 
-So if the Sweet Sixteen has:
+So if the Sweet Sixteen in a particular year had:
 
 * 3 1 seeds
 * 4 2 seeds
@@ -153,7 +150,7 @@ In the data I'll represent that as `3432210010000000`.
 
 A challenge I encountered doing the analysis was that not every seed is represented as ever winning in every round. For example, a No. 5 seed has never won the championship, and a No. 16 seed has never appeared in the Sweet Sixteen, among others. As a result when I go to summarise the data those particular combinations don't appear in the data, and I'd like them to appear as `0`.
 
-The approach I take in these situations is to use what I call an anchor data frame that contains the value I'd like populated in the summary dataset for every combination of identifying levels if it is missing from the summary dataset. `dplyr` does have a `coalesce()` function, but you need to write out explicitly which variables to coalesce. While not prohibitive it is tedius to do so for many variables. It would be nice if we could join two tables and naturally coalesce the columns in both without explicitly coding each one. That's what the excellent `coalesce_join()` function from Edward Visel's blog does[^3]. I'll be using it a lot in this analysis.
+The approach I take in these situations is to use what I call an anchor data frame that contains the value I'd like populated in the summary dataset for every combination of identifying levels if it is missing from the summary dataset. Then I coalesce values in the summary dataset with the anchor dataframe to populate a complete dataset. `dplyr` does have a `coalesce()` function, but you need to write out explicitly which variables to coalesce. While not prohibitive it is tedius to do so for many variables. It would be nice if we could join two tables and naturally coalesce the columns in both without explicitly coding each one. That's what the excellent `coalesce_join()` function from Edward Visel's blog does[^3]. I'll be using it a lot in this analysis.
 
 ```{r}
 coalesce_join <- function(x, y, 
@@ -182,7 +179,7 @@ coalesce_join <- function(x, y,
 }
 ```
 
-I make use of the `coalesce_join()` function each time I summarise a round of the tournament. Rather than repeat similar code (changing the round we're analzying, and what we want to call the variable) multiple times I've turned that piece of the analysis into a function. This function takes as input a round to analyze, `r`, and a variable name, `varname`, and returns a frequency table of seed combinations in that round. Passing things you want to be used as both a variable name and as a grouping variable later in the analysis chain is challenging. I'm making use of tools in the `rlang` package as well as helpful hints from Edwin Thoen's blog[^4].
+I make use of the `coalesce_join()` function each time I summarise a round of the tournament. Rather than repeat similar code (changing only the round we're analzying, and what we want to call the variable) multiple times I've turned that piece of the analysis into a function. This function takes as input a round to analyze, `r`, and a variable name, `varname`, and returns a frequency table of seed combinations in that round. Passing things you want to be used as both a variable name and as a grouping variable later in the analysis chain is challenging. I'm making use of tools in the `rlang` package as well as helpful hints from Edwin Thoen's blog[^4].
 
 ```{r}
 round_summary <- function(r,varname){
@@ -217,7 +214,7 @@ Now, finally, onto the analysis.
 round_summary(6, quo(champion))
 ```
 
-This result was surprising to me. I expected No. 1 seeds to win more than any other seeds, maybe around 50% of the time but not over 60% of the time. A good strategry for filling out a winning bracket would definitely seem to mean picking one of the four No. 1 seds to win unless you had a very good reason for selecting a No. 2 or No. 3 seed. 
+This result was surprising to me. I expected No. 1 seeds to win more than any other seeds, maybe close to 50% of the time but not over 60% of the time. A good strategry for filling out a winning bracket would definitely seem to mean picking one of the four No. 1 seds to win unless you had a very good reason for selecting a No. 2 or No. 3 seed. 
 
 #### Championship Game
 
@@ -246,12 +243,12 @@ results_w_seeds %>%
   group_by(Season,round,WSeed) %>%
   summarise(count = n()) %>%
   spread(key = WSeed, value = count, fill = 0) %>%
-  mutate(seed_dist = paste0(`01`,`02`,`03`,`04`,`05`,`06`,`07`,`08`,`09`,`10`,`11`,`12`,`13`,`14`,`15`,`16`)) %>%
-  select(Season,round,seed_dist) %>%
+  mutate(seed_combo = paste0(`01`,`02`,`03`,`04`,`05`,`06`,`07`,`08`,`09`,`10`,`11`,`12`,`13`,`14`,`15`,`16`)) %>%
+  select(Season,round,seed_combo) %>%
   ungroup() %>%
   group_by(round) %>%
   summarise(years = n(),
-            distinct_dist = n_distinct(seed_dist)) %>%
+            distinct_combo = n_distinct(seed_combo)) %>%
   arrange(desc(round)) %>%
   mutate(round = case_when(round == 1 ~ "Round of 32",
                            round == 2 ~ "Sweet 16",
@@ -266,7 +263,7 @@ I knew that there are seemingly infinite[^5] number of possible brackets, but I 
 
 The data has laid waste to by intended analysis and bracket strategy. Rather than looking at the frequencies of seed combinations for each round I'll need to summarize the data. 
 
-## Average Seed Distribution by Round
+## Average Seed Combinations by Round
 
 ```{r, warning = FALSE}
 results_w_seeds %>%
@@ -291,7 +288,7 @@ results_w_seeds %>%
 
 #### Creating recomendations from these averages
 
-The decimal values in the above table allow for some interpretation, but here is one such configuration of recommendations based on the averages. Here I'll denote the number and seed of the recommendations as NxA/B/C, meaning choose N teams from a pool of A, B, and C seeds. 
+The decimal values in the above table allow for some flexibility in making picks, but here is one such configuration of recommendations based on the averages. Here I'll denote the number and seed of the recommendations as NxA/B/C, meaning choose N teams from a pool of A, B, and C seeds. 
 
 | Round           |Recommendation                                                                 |
 |-----------------|-------------------------------------------------------------------------------|
@@ -304,7 +301,7 @@ The decimal values in the above table allow for some interpretation, but here is
 
 ## 2019 Results
 
-How did the 2019 tournament play out with respect to these averages and recommendations? Read on below...
+How did the 2019 tournament play out with respect to these averages? Read on below...
 
 #### Champion
 
@@ -349,27 +346,25 @@ How did the 2019 tournament play out with respect to these averages and recommen
 
 ## Closing Thoughts
 
-The first two rounds of the 2019 tournament were chalky[^6], which lends itself nicely to using long run averages as guides for selecting a bracket. 
+I was caught off-guard by the variance in seed combinations from Final Four down through the Round of 32. Before doing the analysis I thought surely collapsing the data into seed combinations would eliminate more of the complexity in the games than it did.
+
+The first two rounds of the 2019 tournament were chalky[^6], which lends itself nicely to using long run averages as guides for selecting a bracket. Looking at the averages table, we see that the ordinality of the seeds is perfectly correlated with the average number of teams of that seed advancing to that round, with once exception. The exception is in the Sweet 16, where No.'s 8 and 9 seeds are less likely than No.'s 10, 11, and 12 seeds to advance. I think this is due to the fact that No. 8/9 seeds need to play No 1. seeds in the second round, and No. 1 seeds are generally very good teams. Perhaps disproportionately better than the seed alone indicates. In general, despite the hand-wringing some years, I think this speaks to the selection committee seeding the tournament well.
 
 The more difficult piece to this is the logical extension of knowing how many of each seed are likely to advance to the next
 round. For example, I know there are on average going to be 2 No. 1 seeds in the Final Four, which 2 No. 1 seeds do I pick?
-
-My approach this year was to use the pre tournament probabilities from 538[^4]. So I selected the No. 1 seed with the highest pre-tournament probability of winning the championship (Duke, ~28%)
-
-The descending nature of the averages indicate
-
+As of this writing they are no longer available online, but my approach was to use the pre tournament probabilities from 538[^7]. Knowing that a No. 1 seed would likely win, I selected the No. 1 seed with with the highest pre-tournament probability of winning the championship (Duke, ~28%). 
 
 Next year: expand to looking at conditional distributions. So Conditional on a No. 1 seed winning the tournament, what is the average distribution. Then conditional on the chosen championship game, what is the average final four. And so on...
 
 
 
-[^1]:Kane, John (April 8, 2018). ["NCAA Men's Tournament First Round Upsets"](https://www.johnckane.com/blog/ncaa-first-round-upsets/) Retrieved April 17, 2019. 
-[^2]:https://www.kaggle.com/c/mens-machine-learning-competition-2019
-[^3]:https://alistaire.rbind.io/blog/coalescing-joins/
-[^4]:https://edwinth.github.io/blog/dplyr-recipes/
-[^5]:https://www.ncaa.com/news/basketball-men/bracketiq/2019-03-20/perfect-ncaa-bracket-absurd-odds-march-madness-dream
-[^6]:https://www.cbssports.com/college-basketball/news/march-madness-2019-chalk-has-ruled-the-ncaa-tournament-so-far-but-that-sets-up-what-could-be-a-great-sweet-16/
-[^6]:https://projects.fivethirtyeight.com/2019-march-madness-predictions/
+[^1]: Kane, John (April 8, 2018). ["NCAA Men's Tournament First Round Upsets"](https://www.johnckane.com/blog/ncaa-first-round-upsets/). Retrieved April 17, 2019. 
+[^2]: ["Google Cloud & NCAA® ML Competition 2019-Men's"](https://www.kaggle.com/c/mens-machine-learning-competition-2019). Retrieved April 18, 2019. 
+[^3]: Visel, Edward (July 28, 2018). ["Coalescing Joins in dplyr"](https://alistaire.rbind.io/blog/coalescing-joins/). Retrieved April 18, 2019.
+[^4]: Thoen, Edwin (August 25, 2017). ["Tidy evaluation, most common actions"](https://edwinth.github.io/blog/dplyr-recipes/). Retrieved April 18, 2019. 
+[^5]: Wilco, Daniel (March 25, 2019). ["A perfect NCAA bracket: The absurd odds of the March Madness dream"](https://www.ncaa.com/news/basketball-men/bracketiq/2019-03-20/perfect-ncaa-bracket-absurd-odds-march-madness-dream). Retrieved April 18, 2019.
+[^6]: Norlander, Matt (March 25, 2019). ["March Madness 2019: Chalk has ruled the NCAA Tournament so far, but that sets up what could be a great Sweet 16"](https://www.cbssports.com/college-basketball/news/march-madness-2019-chalk-has-ruled-the-ncaa-tournament-so-far-but-that-sets-up-what-could-be-a-great-sweet-16/). Retrieved April 18, 2019.
+[^7]: ["2019 March Madness Predictions"](https://projects.fivethirtyeight.com/2019-march-madness-predictions/). Retrieved April 18, 2019. 
 
 
 
