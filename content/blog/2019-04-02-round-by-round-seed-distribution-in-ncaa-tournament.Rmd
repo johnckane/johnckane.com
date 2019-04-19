@@ -1,8 +1,8 @@
 ---
-title: "Round by Round Seed Combinations in NCAA Tournament"
+title: "Round by Round Seed Combinations in the Men's NCAA Tournament"
 author: "John Kane"
-date: '2019-04-18'
-slug: round-by-round-seed-combinations-in-ncaa-tournament
+date: '2019-04-19'
+slug: round-by-round-seed-combinations-in-mens-ncaa-tournament
 tags:
 - basketball
 - March Madness
@@ -286,6 +286,8 @@ results_w_seeds %>%
   kable()
 ```
 
+Looking at the averages table, we see that the ordinality of the seeds is perfectly correlated with the average number of teams of that seed advancing to that round, with one exception. The exception is in the Sweet 16, where Nos. 8 and 9 seeds are less likely than Nos. 10, 11, and 12 seeds to advance. I think this is due to the fact that No. 8/9 seeds need to play No 1. seeds in the second round, and No. 1 seeds are generally very good teams, perhaps disproportionately better than the seed alone indicates. In general, despite the hand-wringing some years, I think this speaks to the selection committee seeding the tournament well.
+
 #### Creating recomendations from these averages
 
 The decimal values in the above table allow for some flexibility in making picks, but here is one such configuration of recommendations based on the averages. Here I'll denote the number and seed of the recommendations as NxA/B/C, meaning choose N teams from a pool of A, B, and C seeds. 
@@ -301,7 +303,7 @@ The decimal values in the above table allow for some flexibility in making picks
 
 ## 2019 Results
 
-How did the 2019 tournament play out with respect to these averages? Read on below...
+Here how the 2019 tournament played out with respect to these averages:
 
 #### Champion
 
@@ -346,16 +348,11 @@ How did the 2019 tournament play out with respect to these averages? Read on bel
 
 ## Closing Thoughts
 
-I was caught off-guard by the variance in seed combinations from Final Four down through the Round of 32. Before doing the analysis I thought surely collapsing the data into seed combinations would eliminate more of the complexity in the games than it did.
+I was caught off guard by the variance in seed combinations from Final Four down through the Round of 32. Before doing the analysis I thought surely collapsing the data into seed combinations would eliminate more of the complexity in the tournament than it did. I still thought that looking at the distribution of seed combinations was interesting and valuable where it made sense, but was comfortable abandoning it when it no longer did.
 
-The first two rounds of the 2019 tournament were chalky[^6], which lends itself nicely to using long run averages as guides for selecting a bracket. Looking at the averages table, we see that the ordinality of the seeds is perfectly correlated with the average number of teams of that seed advancing to that round, with once exception. The exception is in the Sweet 16, where No.'s 8 and 9 seeds are less likely than No.'s 10, 11, and 12 seeds to advance. I think this is due to the fact that No. 8/9 seeds need to play No 1. seeds in the second round, and No. 1 seeds are generally very good teams. Perhaps disproportionately better than the seed alone indicates. In general, despite the hand-wringing some years, I think this speaks to the selection committee seeding the tournament well.
+The more difficult piece to this is selecting _which_ teams of each seed to select. For example, I know there are on average going to be 2 No. 1 seeds in the Final Four, but which 2 No. 1 seeds do I pick? As of this writing they are no longer available online, but my approach was to use the pre-tournament probabilities from 538[^6]. According to their simulated results, the most likely No. 1 seeds to reach the Final Four were Duke and Virginia, so that's what I selected.
 
-The more difficult piece to this is the logical extension of knowing how many of each seed are likely to advance to the next
-round. For example, I know there are on average going to be 2 No. 1 seeds in the Final Four, which 2 No. 1 seeds do I pick?
-As of this writing they are no longer available online, but my approach was to use the pre tournament probabilities from 538[^7]. Knowing that a No. 1 seed would likely win, I selected the No. 1 seed with with the highest pre-tournament probability of winning the championship (Duke, ~28%). 
-
-Next year: expand to looking at conditional distributions. So Conditional on a No. 1 seed winning the tournament, what is the average distribution. Then conditional on the chosen championship game, what is the average final four. And so on...
-
+This year I participated in two different pools with the same bracket and was actually leading in both of them heading into the championship game. I lost both when Virginia held off Texas Tech in overtime. I was certainly lucky with some picks to be in that position so late in the tournament, but I'd like to think it wasn't pure luck. Instead I prefer to think that it was data informed luck, which is what I was going for the whole time.
 
 
 [^1]: Kane, John (April 8, 2018). ["NCAA Men's Tournament First Round Upsets"](https://www.johnckane.com/blog/ncaa-first-round-upsets/). Retrieved April 17, 2019. 
@@ -363,8 +360,7 @@ Next year: expand to looking at conditional distributions. So Conditional on a N
 [^3]: Visel, Edward (July 28, 2018). ["Coalescing Joins in dplyr"](https://alistaire.rbind.io/blog/coalescing-joins/). Retrieved April 18, 2019.
 [^4]: Thoen, Edwin (August 25, 2017). ["Tidy evaluation, most common actions"](https://edwinth.github.io/blog/dplyr-recipes/). Retrieved April 18, 2019. 
 [^5]: Wilco, Daniel (March 25, 2019). ["A perfect NCAA bracket: The absurd odds of the March Madness dream"](https://www.ncaa.com/news/basketball-men/bracketiq/2019-03-20/perfect-ncaa-bracket-absurd-odds-march-madness-dream). Retrieved April 18, 2019.
-[^6]: Norlander, Matt (March 25, 2019). ["March Madness 2019: Chalk has ruled the NCAA Tournament so far, but that sets up what could be a great Sweet 16"](https://www.cbssports.com/college-basketball/news/march-madness-2019-chalk-has-ruled-the-ncaa-tournament-so-far-but-that-sets-up-what-could-be-a-great-sweet-16/). Retrieved April 18, 2019.
-[^7]: ["2019 March Madness Predictions"](https://projects.fivethirtyeight.com/2019-march-madness-predictions/). Retrieved April 18, 2019. 
+[^6]: ["2019 March Madness Predictions"](https://projects.fivethirtyeight.com/2019-march-madness-predictions/). Retrieved April 18, 2019. 
 
 
 

@@ -1,0 +1,1200 @@
+---
+title: "Round by Round Seed Combinations in the Men's NCAA Tournament"
+author: "John Kane"
+date: '2019-04-19'
+slug: round-by-round-seed-combinations-in-mens-ncaa-tournament
+tags:
+- basketball
+- March Madness
+- R
+categories:
+- basketball
+- March Madness
+- R
+---
+
+
+
+<p>Most years filling out my NCAA Tournament bracket I work forwards through the games. I select the winners of the first round games then, using an ever dwindling pool of teams, proceed all the way through to selecting a champion. The later round games are worth more points in bracket pools so you can really hinder your prospects of winning if you don’t at least have an eye on the later rounds of the tournament early on. I rarely did, and often wasn’t competitive beyond the Sweet Sixteen.</p>
+<p>This year I wanted to try something different. I went about filling out the bracket backwards, starting with a champion, then selecting a championship game (that includes the champion of course), then choosing a Final Four (that includes both teams in the championship game) and so on to selecting the winners of the first round games. Unlike most years’ brackets I was going to make these decisions informed by data, rather than my instincts as a sports fan.</p>
+<p>Last year I did an entire post analyzing how common each upset was by matchup in the first round<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a>. This analysis looks at every round of the tournament, but starting with the last round, the champion, rather than the first round. I want to determine what the distribution of seed combinations are in each round to inform my selections.</p>
+<div id="data" class="section level2">
+<h2>Data</h2>
+<p>The data comes from the Kaggle competition for March Madness<a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a>. I didn’t submit an entry to the contest but used the data for this analysis. There are several datasets included for those competing in the contest, but I’m interested in just two of them, one for tournament seeds and one for tournament results.</p>
+<pre class="r"><code>library(tidyverse)
+library(knitr)
+seeds &lt;- read_csv(paste0(data_path,&quot;NCAATourneySeeds.csv&quot;))
+results &lt;- read_csv(paste0(data_path,&quot;NCAATourneyCompactResults.csv&quot;))</code></pre>
+<pre class="r"><code>glimpse(seeds)</code></pre>
+<pre><code>## Observations: 2,218
+## Variables: 3
+## $ Season &lt;dbl&gt; 1985, 1985, 1985, 1985, 1985, 1985, 1985, 1985, 1985, 198…
+## $ Seed   &lt;chr&gt; &quot;W01&quot;, &quot;W02&quot;, &quot;W03&quot;, &quot;W04&quot;, &quot;W05&quot;, &quot;W06&quot;, &quot;W07&quot;, &quot;W08&quot;, &quot;…
+## $ TeamID &lt;dbl&gt; 1207, 1210, 1228, 1260, 1374, 1208, 1393, 1396, 1439, 117…</code></pre>
+<pre class="r"><code>glimpse(results)</code></pre>
+<pre><code>## Observations: 2,184
+## Variables: 8
+## $ Season  &lt;dbl&gt; 1985, 1985, 1985, 1985, 1985, 1985, 1985, 1985, 1985, 19…
+## $ DayNum  &lt;dbl&gt; 136, 136, 136, 136, 136, 136, 136, 136, 136, 136, 136, 1…
+## $ WTeamID &lt;dbl&gt; 1116, 1120, 1207, 1229, 1242, 1246, 1256, 1260, 1314, 13…
+## $ WScore  &lt;dbl&gt; 63, 59, 68, 58, 49, 66, 78, 59, 76, 79, 75, 96, 85, 83, …
+## $ LTeamID &lt;dbl&gt; 1234, 1345, 1250, 1425, 1325, 1449, 1338, 1233, 1292, 13…
+## $ LScore  &lt;dbl&gt; 54, 58, 43, 55, 38, 58, 54, 58, 57, 70, 64, 83, 68, 59, …
+## $ WLoc    &lt;chr&gt; &quot;N&quot;, &quot;N&quot;, &quot;N&quot;, &quot;N&quot;, &quot;N&quot;, &quot;N&quot;, &quot;N&quot;, &quot;N&quot;, &quot;N&quot;, &quot;N&quot;, &quot;N&quot;, &quot;…
+## $ NumOT   &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,…</code></pre>
+<div id="determining-rounds-for-games" class="section level4">
+<h4>Determining rounds for games</h4>
+<p>The Kaggle data was missing one important piece of information - the round of each game . To solve for this I had to rely on my knowledge of the NCAA tournament. I knew that at some point in the last 15 years or so the tournament added the play-in games on the Tuesday before the first round. Eventually additional play-in games were added on the same Tuesday, then additional games on the Wednesday before the first round. Each round except for Final Four, Championship, and first years of the play-in games take place over two days.</p>
+<p>So the first four rounds occur on a total of 8 days, then the fifth and sixth rounds occur on one day each. So that makes 10 total days’ worth of games preceding the play-in game era. When you include play-in games in the calculation you arrive at either 11 or 12 days’ worth of games, depending on the year.</p>
+<p>The Kaggle data does provide the day of the season for each game, both regular season and tournament. To determine which day of the tournament each game was played on I first determined what the first day of the tournament was, then subtracted the day of each game from that value.</p>
+<pre class="r"><code>season_first_tourney_day &lt;-
+results %&gt;%
+  group_by(Season) %&gt;%
+  summarise(first_day = min(DayNum))
+
+results_tourney_day &lt;-
+  results %&gt;%
+  inner_join(season_first_tourney_day, by = &#39;Season&#39;) %&gt;%
+  mutate(days_since_first = DayNum - first_day)</code></pre>
+<p>With the first day of the tournament coded as 0, we can see the distribution of how many games have been played on each day of the tournament:</p>
+<pre class="r"><code>table(results_tourney_day$days_since_first)</code></pre>
+<pre><code>## 
+##   0   1   2   3   4   5   7   8   9  10  11  12  16  18  20 
+## 282 272 416 416 144 144  64  64 104 104  36  36  32  52  18</code></pre>
+<p>I can also count how many distinct days of games each tournament had.</p>
+<pre class="r"><code>results_tourney_day %&gt;%
+  group_by(Season) %&gt;%
+  summarise(count = n_distinct(days_since_first)) %&gt;%
+  ungroup() %&gt;%
+  group_by(count) %&gt;%
+  summarize(Seasons = paste(Season,collapse = &quot;, &quot;)) %&gt;%
+  kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="right">count</th>
+<th align="left">Seasons</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">10</td>
+<td align="left">1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000</td>
+</tr>
+<tr class="even">
+<td align="right">11</td>
+<td align="left">2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010</td>
+</tr>
+<tr class="odd">
+<td align="right">12</td>
+<td align="left">2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018</td>
+</tr>
+</tbody>
+</table>
+<p>The above two pieces of information tell me on which day of the tournament each game was, and how many total games there are by year. Before play-in games days 0 and 1 were first round games. But with the advent of play-in games days 2 and 3 become first round games. All other day/round assignments follow from that information.</p>
+<pre class="r"><code>results_tourney_day &lt;-
+  results_tourney_day%&gt;%
+  mutate(round  = case_when(
+    Season %in% c(1985:2000) &amp; days_since_first %in% c(0,1)  ~ 1,
+    Season %in% c(1985:2000) &amp; days_since_first %in% c(2,3)  ~ 2,
+    Season %in% c(1985:2000) &amp; days_since_first %in% c(7,8)  ~ 3,
+    Season %in% c(1985:2000) &amp; days_since_first %in% c(9,10) ~ 4,
+    Season %in% c(1985:2000) &amp; days_since_first %in% c(16)   ~ 5,
+    Season %in% c(1985:2000) &amp; days_since_first %in% c(18)   ~ 6,
+    Season %in% c(2001:2010) &amp; days_since_first %in% c(0)    ~ 0,
+    Season %in% c(2001:2010) &amp; days_since_first %in% c(2,3)  ~ 1,
+    Season %in% c(2001:2010) &amp; days_since_first %in% c(4,5)  ~ 2,
+    Season %in% c(2001:2010) &amp; days_since_first %in% c(9,10) ~ 3,
+    Season %in% c(2001:2010) &amp; days_since_first %in% c(11,12)~ 4,
+    Season %in% c(2001:2010) &amp; days_since_first %in% c(18)   ~ 5,
+    Season %in% c(2001:2010) &amp; days_since_first %in% c(20)   ~ 6,
+    Season %in% c(2011:2018) &amp; days_since_first %in% c(0,1)  ~ 0,
+    Season %in% c(2011:2018) &amp; days_since_first %in% c(2,3)  ~ 1,
+    Season %in% c(2011:2018) &amp; days_since_first %in% c(4,5)  ~ 2,
+    Season %in% c(2011:2018) &amp; days_since_first %in% c(9,10) ~ 3,
+    Season %in% c(2011:2018) &amp; days_since_first %in% c(11,12)~ 4,
+    Season %in% c(2011:2018) &amp; days_since_first %in% c(18)   ~ 5,
+    Season %in% c(2011:2018) &amp; days_since_first %in% c(20)   ~ 6,
+    TRUE ~ NA_real_))</code></pre>
+<p>With rounds coded I will want to determine what the seed was for both the winning and losing team of each game. I can do this in two joins. The first joins the results data with the seed data but only where the winning team id matches the team ID in the seed data. The second join is similar, but done for the losing team.</p>
+<pre class="r"><code>results_w_seeds &lt;-
+  results_tourney_day %&gt;% select(Season,WTeamID,LTeamID,round) %&gt;%
+  inner_join(.,
+             seeds %&gt;% mutate(WSeed = str_sub(Seed,2,3)),
+             by = c(&#39;Season&#39;,&#39;WTeamID&#39; = &#39;TeamID&#39;)) %&gt;%
+  inner_join(.,
+             seeds %&gt;% mutate(LSeed = str_sub(Seed,2,3)),
+             by = c(&#39;Season&#39;,&#39;LTeamID&#39; = &#39;TeamID&#39;)) %&gt;%
+  select(Season,WSeed,LSeed,round)
+
+head(results_w_seeds) %&gt;% kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="right">Season</th>
+<th align="left">WSeed</th>
+<th align="left">LSeed</th>
+<th align="right">round</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">1985</td>
+<td align="left">09</td>
+<td align="left">08</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="right">1985</td>
+<td align="left">11</td>
+<td align="left">06</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="right">1985</td>
+<td align="left">01</td>
+<td align="left">16</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="right">1985</td>
+<td align="left">09</td>
+<td align="left">08</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="right">1985</td>
+<td align="left">03</td>
+<td align="left">14</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="right">1985</td>
+<td align="left">12</td>
+<td align="left">05</td>
+<td align="right">1</td>
+</tr>
+</tbody>
+</table>
+<p>Now completed with data wrangling we can move onto the analysis!</p>
+</div>
+</div>
+<div id="seed-combinations-by-round" class="section level2">
+<h2>Seed Combinations by Round</h2>
+<p>To represent the different seed combinations I’ll concatenate the count of each seed in that round together.</p>
+<p>So if the Sweet Sixteen in a particular year had:</p>
+<ul>
+<li>3 1 seeds</li>
+<li>4 2 seeds</li>
+<li>3 3 seeds</li>
+<li>2 4 seed</li>
+<li>2 5 seeds</li>
+<li>1 6 seeds</li>
+<li>0 7 seeds</li>
+<li>0 8 seeds</li>
+<li>1 9 seeds</li>
+<li>0 10, 11, 12, 13, 14, 15, 16 seeds</li>
+</ul>
+<p>In the data I’ll represent that as <code>3432210010000000</code>.</p>
+<div id="r-functions-coalesce_join-and-round_summary" class="section level4">
+<h4>R Functions: <code>coalesce_join()</code> and <code>round_summary()</code></h4>
+<p>A challenge I encountered doing the analysis was that not every seed is represented as ever winning in every round. For example, a No. 5 seed has never won the championship, and a No. 16 seed has never appeared in the Sweet Sixteen, among others. As a result when I go to summarise the data those particular combinations don’t appear in the data, and I’d like them to appear as <code>0</code>.</p>
+<p>The approach I take in these situations is to use what I call an anchor data frame that contains the value I’d like populated in the summary dataset for every combination of identifying levels if it is missing from the summary dataset. Then I coalesce values in the summary dataset with the anchor dataframe to populate a complete dataset. <code>dplyr</code> does have a <code>coalesce()</code> function, but you need to write out explicitly which variables to coalesce. While not prohibitive it is tedius to do so for many variables. It would be nice if we could join two tables and naturally coalesce the columns in both without explicitly coding each one. That’s what the excellent <code>coalesce_join()</code> function from Edward Visel’s blog does<a href="#fn3" class="footnoteRef" id="fnref3"><sup>3</sup></a>. I’ll be using it a lot in this analysis.</p>
+<pre class="r"><code>coalesce_join &lt;- function(x, y, 
+                          by = NULL, suffix = c(&quot;.x&quot;, &quot;.y&quot;), 
+                          join = dplyr::full_join, ...) {
+    joined &lt;- join(x, y, by = by, suffix = suffix, ...)
+    # names of desired output
+    cols &lt;- union(names(x), names(y))
+    
+    to_coalesce &lt;- names(joined)[!names(joined) %in% cols]
+    suffix_used &lt;- suffix[ifelse(endsWith(to_coalesce, suffix[1]), 1, 2)]
+    # remove suffixes and deduplicate
+    to_coalesce &lt;- unique(substr(
+        to_coalesce, 
+        1, 
+        nchar(to_coalesce) - nchar(suffix_used)
+    ))
+    
+    coalesced &lt;- purrr::map_dfc(to_coalesce, ~dplyr::coalesce(
+        joined[[paste0(.x, suffix[1])]], 
+        joined[[paste0(.x, suffix[2])]]
+    ))
+    names(coalesced) &lt;- to_coalesce
+    
+    dplyr::bind_cols(joined, coalesced)[cols]
+}</code></pre>
+<p>I make use of the <code>coalesce_join()</code> function each time I summarise a round of the tournament. Rather than repeat similar code (changing only the round we’re analzying, and what we want to call the variable) multiple times I’ve turned that piece of the analysis into a function. This function takes as input a round to analyze, <code>r</code>, and a variable name, <code>varname</code>, and returns a frequency table of seed combinations in that round. Passing things you want to be used as both a variable name and as a grouping variable later in the analysis chain is challenging. I’m making use of tools in the <code>rlang</code> package as well as helpful hints from Edwin Thoen’s blog<a href="#fn4" class="footnoteRef" id="fnref4"><sup>4</sup></a>.</p>
+<pre class="r"><code>round_summary &lt;- function(r,varname){
+  
+  varname_nm &lt;- quo_name(varname)
+  
+  results_w_seeds %&gt;%
+  filter(round == r) %&gt;%
+  group_by(Season,WSeed) %&gt;%
+  summarise(count = n()) %&gt;%
+  spread(key = WSeed, value = count, fill = 0) %&gt;%
+  mutate(dummy = 1) %&gt;%
+  coalesce_join(.,
+            tibble(`01` = 0,`02` = 0, `03` = 0, `04` = 0, `05` = 0, `06` = 0, `07` = 0, `08` = 0, `09` = 0, `10` = 0, 
+                   `11` = 0, `12` =0, `13` = 0, `14` = 0, `15` = 0, `16` = 0, dummy = 1),
+            by = &quot;dummy&quot;) %&gt;%
+  mutate(!!varname_nm := paste0(`01`,`02`,`03`,`04`,`05`,`06`,`07`,`08`,`09`,`10`,`11`,`12`,`13`,`14`,`15`,`16`)) %&gt;%
+  group_by(!!varname) %&gt;%
+  summarise(count = n()) %&gt;%
+  mutate(pct = paste(round(100*count/sum(count),1),&quot;%&quot;)) %&gt;%
+  arrange(desc(count)) %&gt;%
+  kable()
+}</code></pre>
+<p>Now, finally, onto the analysis.</p>
+</div>
+<div id="champion" class="section level4">
+<h4>Champion</h4>
+<pre class="r"><code>round_summary(6, quo(champion))</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">champion</th>
+<th align="right">count</th>
+<th align="left">pct</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">1000000000000000</td>
+<td align="right">21</td>
+<td align="left">61.8 %</td>
+</tr>
+<tr class="even">
+<td align="left">0100000000000000</td>
+<td align="right">5</td>
+<td align="left">14.7 %</td>
+</tr>
+<tr class="odd">
+<td align="left">0010000000000000</td>
+<td align="right">4</td>
+<td align="left">11.8 %</td>
+</tr>
+<tr class="even">
+<td align="left">0000000100000000</td>
+<td align="right">1</td>
+<td align="left">2.9 %</td>
+</tr>
+<tr class="odd">
+<td align="left">0000001000000000</td>
+<td align="right">1</td>
+<td align="left">2.9 %</td>
+</tr>
+<tr class="even">
+<td align="left">0000010000000000</td>
+<td align="right">1</td>
+<td align="left">2.9 %</td>
+</tr>
+<tr class="odd">
+<td align="left">0001000000000000</td>
+<td align="right">1</td>
+<td align="left">2.9 %</td>
+</tr>
+</tbody>
+</table>
+<p>This result was surprising to me. I expected No. 1 seeds to win more than any other seeds, maybe close to 50% of the time but not over 60% of the time. A good strategry for filling out a winning bracket would definitely seem to mean picking one of the four No. 1 seds to win unless you had a very good reason for selecting a No. 2 or No. 3 seed.</p>
+</div>
+<div id="championship-game" class="section level4">
+<h4>Championship Game</h4>
+<pre class="r"><code>round_summary(5,quo(championshipgame))</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">championshipgame</th>
+<th align="right">count</th>
+<th align="left">pct</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">1100000000000000</td>
+<td align="right">8</td>
+<td align="left">23.5 %</td>
+</tr>
+<tr class="even">
+<td align="left">2000000000000000</td>
+<td align="right">7</td>
+<td align="left">20.6 %</td>
+</tr>
+<tr class="odd">
+<td align="left">0110000000000000</td>
+<td align="right">5</td>
+<td align="left">14.7 %</td>
+</tr>
+<tr class="even">
+<td align="left">1000100000000000</td>
+<td align="right">3</td>
+<td align="left">8.8 %</td>
+</tr>
+<tr class="odd">
+<td align="left">1001000000000000</td>
+<td align="right">3</td>
+<td align="left">8.8 %</td>
+</tr>
+<tr class="even">
+<td align="left">1000010000000000</td>
+<td align="right">2</td>
+<td align="left">5.9 %</td>
+</tr>
+<tr class="odd">
+<td align="left">1010000000000000</td>
+<td align="right">2</td>
+<td align="left">5.9 %</td>
+</tr>
+<tr class="even">
+<td align="left">0000001100000000</td>
+<td align="right">1</td>
+<td align="left">2.9 %</td>
+</tr>
+<tr class="odd">
+<td align="left">0010000100000000</td>
+<td align="right">1</td>
+<td align="left">2.9 %</td>
+</tr>
+<tr class="even">
+<td align="left">0020000000000000</td>
+<td align="right">1</td>
+<td align="left">2.9 %</td>
+</tr>
+<tr class="odd">
+<td align="left">1000000100000000</td>
+<td align="right">1</td>
+<td align="left">2.9 %</td>
+</tr>
+</tbody>
+</table>
+<p>Given that No. 1 seeds win the tournament over 60% of the time we’d expect them to appear in most championship games. That is indeed the case with at least 1 No. 1 seed appearing in 7 of the 8 most frequently occurring champsionship matchups. Selecting a No. 1 and a No. 2 seed or two No. 1 seeds has occurred just under 50% of the time.</p>
+</div>
+<div id="final-four" class="section level4">
+<h4>Final Four</h4>
+<pre class="r"><code>round_summary(4,quo(finalfour))</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">finalfour</th>
+<th align="right">count</th>
+<th align="left">pct</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">1120000000000000</td>
+<td align="right">3</td>
+<td align="left">8.8 %</td>
+</tr>
+<tr class="even">
+<td align="left">2110000000000000</td>
+<td align="right">3</td>
+<td align="left">8.8 %</td>
+</tr>
+<tr class="odd">
+<td align="left">1201000000000000</td>
+<td align="right">2</td>
+<td align="left">5.9 %</td>
+</tr>
+<tr class="even">
+<td align="left">1210000000000000</td>
+<td align="right">2</td>
+<td align="left">5.9 %</td>
+</tr>
+<tr class="odd">
+<td align="left">2001100000000000</td>
+<td align="right">2</td>
+<td align="left">5.9 %</td>
+</tr>
+<tr class="even">
+<td align="left">2100010000000000</td>
+<td align="right">2</td>
+<td align="left">5.9 %</td>
+</tr>
+<tr class="odd">
+<td align="left">3001000000000000</td>
+<td align="right">2</td>
+<td align="left">5.9 %</td>
+</tr>
+<tr class="even">
+<td align="left">0011000100100000</td>
+<td align="right">1</td>
+<td align="left">2.9 %</td>
+</tr>
+<tr class="odd">
+<td align="left">0111000000100000</td>
+<td align="right">1</td>
+<td align="left">2.9 %</td>
+</tr>
+<tr class="even">
+<td align="left">1000100200000000</td>
+<td align="right">1</td>
+<td align="left">2.9 %</td>
+</tr>
+<tr class="odd">
+<td align="left">1002000010000000</td>
+<td align="right">1</td>
+<td align="left">2.9 %</td>
+</tr>
+<tr class="even">
+<td align="left">1012000000000000</td>
+<td align="right">1</td>
+<td align="left">2.9 %</td>
+</tr>
+<tr class="odd">
+<td align="left">1100001100000000</td>
+<td align="right">1</td>
+<td align="left">2.9 %</td>
+</tr>
+<tr class="even">
+<td align="left">1100200000000000</td>
+<td align="right">1</td>
+<td align="left">2.9 %</td>
+</tr>
+<tr class="odd">
+<td align="left">1101010000000000</td>
+<td align="right">1</td>
+<td align="left">2.9 %</td>
+</tr>
+<tr class="even">
+<td align="left">1200000001000000</td>
+<td align="right">1</td>
+<td align="left">2.9 %</td>
+</tr>
+<tr class="odd">
+<td align="left">2010000000100000</td>
+<td align="right">1</td>
+<td align="left">2.9 %</td>
+</tr>
+<tr class="even">
+<td align="left">2010001000000000</td>
+<td align="right">1</td>
+<td align="left">2.9 %</td>
+</tr>
+<tr class="odd">
+<td align="left">2100000000100000</td>
+<td align="right">1</td>
+<td align="left">2.9 %</td>
+</tr>
+<tr class="even">
+<td align="left">2100000100000000</td>
+<td align="right">1</td>
+<td align="left">2.9 %</td>
+</tr>
+<tr class="odd">
+<td align="left">2100100000000000</td>
+<td align="right">1</td>
+<td align="left">2.9 %</td>
+</tr>
+<tr class="even">
+<td align="left">2200000000000000</td>
+<td align="right">1</td>
+<td align="left">2.9 %</td>
+</tr>
+<tr class="odd">
+<td align="left">3000001000000000</td>
+<td align="right">1</td>
+<td align="left">2.9 %</td>
+</tr>
+<tr class="even">
+<td align="left">3100000000000000</td>
+<td align="right">1</td>
+<td align="left">2.9 %</td>
+</tr>
+<tr class="odd">
+<td align="left">4000000000000000</td>
+<td align="right">1</td>
+<td align="left">2.9 %</td>
+</tr>
+</tbody>
+</table>
+<p>This was another surprising result to me. There are 34 years worth of data and 25 distinct seed combinations in the Final Four. No single seed combinations happens even 10% of the time so it is hard to make any kind of recommendation, apart from choosing a combination of Nos. 1, 2, and 3 seeds.</p>
+<p>Given that the Final Four isn’t amenable to a tidy analysis like I had hoped, I have very little hope for earlier rounds. To test this I’ll look at how many distinct combinations of seeds there have been in each round.</p>
+</div>
+</div>
+<div id="distinct-seed-combinations-by-round" class="section level2">
+<h2>Distinct Seed Combinations by Round</h2>
+<pre class="r"><code>results_w_seeds %&gt;%
+  filter(round &gt; 0) %&gt;%
+  group_by(Season,round,WSeed) %&gt;%
+  summarise(count = n()) %&gt;%
+  spread(key = WSeed, value = count, fill = 0) %&gt;%
+  mutate(seed_combo = paste0(`01`,`02`,`03`,`04`,`05`,`06`,`07`,`08`,`09`,`10`,`11`,`12`,`13`,`14`,`15`,`16`)) %&gt;%
+  select(Season,round,seed_combo) %&gt;%
+  ungroup() %&gt;%
+  group_by(round) %&gt;%
+  summarise(years = n(),
+            distinct_combo = n_distinct(seed_combo)) %&gt;%
+  arrange(desc(round)) %&gt;%
+  mutate(round = case_when(round == 1 ~ &quot;Round of 32&quot;,
+                           round == 2 ~ &quot;Sweet 16&quot;,
+                           round == 3 ~ &quot;Elite Eight&quot;,
+                           round == 4 ~ &quot;Final Four&quot;,
+                           round == 5 ~ &quot;Championship Game&quot;,
+                           round == 6 ~ &quot;Champion&quot;)) %&gt;%
+  kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">round</th>
+<th align="right">years</th>
+<th align="right">distinct_combo</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Champion</td>
+<td align="right">34</td>
+<td align="right">7</td>
+</tr>
+<tr class="even">
+<td align="left">Championship Game</td>
+<td align="right">34</td>
+<td align="right">11</td>
+</tr>
+<tr class="odd">
+<td align="left">Final Four</td>
+<td align="right">34</td>
+<td align="right">25</td>
+</tr>
+<tr class="even">
+<td align="left">Elite Eight</td>
+<td align="right">34</td>
+<td align="right">31</td>
+</tr>
+<tr class="odd">
+<td align="left">Sweet 16</td>
+<td align="right">34</td>
+<td align="right">34</td>
+</tr>
+<tr class="even">
+<td align="left">Round of 32</td>
+<td align="right">34</td>
+<td align="right">34</td>
+</tr>
+</tbody>
+</table>
+<p>I knew that there are seemingly infinite<a href="#fn5" class="footnoteRef" id="fnref5"><sup>5</sup></a> number of possible brackets, but I also thought that by collapsing the data into respective seeds that it would reduce some of that complexity. After summarzing the data in the table above, from 1985-2018 there has never been a repeat seed combination in either the first or second round of the tournament! The Sweet Sixteen and Elite Eight also have had only 9 and 3, respectively, non-duplicate values.</p>
+<p>The data has laid waste to by intended analysis and bracket strategy. Rather than looking at the frequencies of seed combinations for each round I’ll need to summarize the data.</p>
+</div>
+<div id="average-seed-combinations-by-round" class="section level2">
+<h2>Average Seed Combinations by Round</h2>
+<pre class="r"><code>results_w_seeds %&gt;%
+  filter(round &gt; 0) %&gt;%
+  group_by(Season,round,WSeed) %&gt;%
+  summarise(count = n()) %&gt;%
+  spread(key = WSeed, value = count, fill = 0) %&gt;%
+  ungroup() %&gt;%
+  select(-Season) %&gt;%
+  group_by(round) %&gt;%
+  summarise_if(is_numeric,mean,na.rm = TRUE) %&gt;%
+  mutate_if(is_numeric,round,1) %&gt;%
+  arrange(desc(round)) %&gt;%
+  mutate(round = case_when(round == 1 ~ &quot;Round of 32&quot;,
+                           round == 2 ~ &quot;Sweet 16&quot;,
+                           round == 3 ~ &quot;Elite Eight&quot;,
+                           round == 4 ~ &quot;Final Four&quot;,
+                           round == 5 ~ &quot;Championship Game&quot;,
+                           round == 6 ~ &quot;Champion&quot;)) %&gt;%
+  kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">round</th>
+<th align="right">01</th>
+<th align="right">02</th>
+<th align="right">03</th>
+<th align="right">04</th>
+<th align="right">05</th>
+<th align="right">06</th>
+<th align="right">07</th>
+<th align="right">08</th>
+<th align="right">09</th>
+<th align="right">10</th>
+<th align="right">11</th>
+<th align="right">12</th>
+<th align="right">13</th>
+<th align="right">14</th>
+<th align="right">15</th>
+<th align="right">16</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Champion</td>
+<td align="right">0.6</td>
+<td align="right">0.1</td>
+<td align="right">0.1</td>
+<td align="right">0.0</td>
+<td align="right">0.0</td>
+<td align="right">0.0</td>
+<td align="right">0.0</td>
+<td align="right">0.0</td>
+<td align="right">0.0</td>
+<td align="right">0.0</td>
+<td align="right">0.0</td>
+<td align="right">0.0</td>
+<td align="right">0.0</td>
+<td align="right">0.0</td>
+<td align="right">0.0</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">Championship Game</td>
+<td align="right">1.0</td>
+<td align="right">0.4</td>
+<td align="right">0.3</td>
+<td align="right">0.1</td>
+<td align="right">0.1</td>
+<td align="right">0.1</td>
+<td align="right">0.0</td>
+<td align="right">0.1</td>
+<td align="right">0.0</td>
+<td align="right">0.0</td>
+<td align="right">0.0</td>
+<td align="right">0.0</td>
+<td align="right">0.0</td>
+<td align="right">0.0</td>
+<td align="right">0.0</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="left">Final Four</td>
+<td align="right">1.6</td>
+<td align="right">0.8</td>
+<td align="right">0.5</td>
+<td align="right">0.4</td>
+<td align="right">0.2</td>
+<td align="right">0.1</td>
+<td align="right">0.1</td>
+<td align="right">0.1</td>
+<td align="right">0.0</td>
+<td align="right">0.0</td>
+<td align="right">0.1</td>
+<td align="right">0.0</td>
+<td align="right">0.0</td>
+<td align="right">0.0</td>
+<td align="right">0.0</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">Elite Eight</td>
+<td align="right">2.8</td>
+<td align="right">1.8</td>
+<td align="right">1.0</td>
+<td align="right">0.6</td>
+<td align="right">0.2</td>
+<td align="right">0.4</td>
+<td align="right">0.3</td>
+<td align="right">0.2</td>
+<td align="right">0.1</td>
+<td align="right">0.2</td>
+<td align="right">0.2</td>
+<td align="right">0.0</td>
+<td align="right">0.0</td>
+<td align="right">0.0</td>
+<td align="right">0.0</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="left">Sweet 16</td>
+<td align="right">3.4</td>
+<td align="right">2.5</td>
+<td align="right">2.1</td>
+<td align="right">1.9</td>
+<td align="right">1.4</td>
+<td align="right">1.2</td>
+<td align="right">0.8</td>
+<td align="right">0.4</td>
+<td align="right">0.2</td>
+<td align="right">0.7</td>
+<td align="right">0.6</td>
+<td align="right">0.6</td>
+<td align="right">0.2</td>
+<td align="right">0.1</td>
+<td align="right">0.0</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">Round of 32</td>
+<td align="right">4.0</td>
+<td align="right">3.8</td>
+<td align="right">3.4</td>
+<td align="right">3.2</td>
+<td align="right">2.6</td>
+<td align="right">2.5</td>
+<td align="right">2.5</td>
+<td align="right">2.0</td>
+<td align="right">2.0</td>
+<td align="right">1.5</td>
+<td align="right">1.5</td>
+<td align="right">1.4</td>
+<td align="right">0.8</td>
+<td align="right">0.6</td>
+<td align="right">0.2</td>
+<td align="right">0</td>
+</tr>
+</tbody>
+</table>
+<p>Looking at the averages table, we see that the ordinality of the seeds is perfectly correlated with the average number of teams of that seed advancing to that round, with one exception. The exception is in the Sweet 16, where Nos. 8 and 9 seeds are less likely than Nos. 10, 11, and 12 seeds to advance. I think this is due to the fact that No. 8/9 seeds need to play No 1. seeds in the second round, and No. 1 seeds are generally very good teams, perhaps disproportionately better than the seed alone indicates. In general, despite the hand-wringing some years, I think this speaks to the selection committee seeding the tournament well.</p>
+<div id="creating-recomendations-from-these-averages" class="section level4">
+<h4>Creating recomendations from these averages</h4>
+<p>The decimal values in the above table allow for some flexibility in making picks, but here is one such configuration of recommendations based on the averages. Here I’ll denote the number and seed of the recommendations as NxA/B/C, meaning choose N teams from a pool of A, B, and C seeds.</p>
+<table>
+<colgroup>
+<col width="18%" />
+<col width="81%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Round</th>
+<th>Recommendation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Champion</td>
+<td>1x1</td>
+</tr>
+<tr class="even">
+<td>Championship Game</td>
+<td>1x1, 1x2/3</td>
+</tr>
+<tr class="odd">
+<td>Final Four</td>
+<td>2x1, 1x2, 1x3/4</td>
+</tr>
+<tr class="even">
+<td>Elite Eight</td>
+<td>3x1, 2x2, 1x3, 1x4, 1x5/6/7/8/9/10/11</td>
+</tr>
+<tr class="odd">
+<td>Sweet Sixteen</td>
+<td>3x1, 3x2, 2x3, 2x4, 1x5, 1x6, 1x7, 1x8/9, 1x10, 1x11, 1x12</td>
+</tr>
+<tr class="even">
+<td>Round of 32</td>
+<td>4x1, 4x2, 3x3, 3x4, 3x5, 3x6, 3x7, 2x8, 2x9, 1x10, 1x11, 1x12, 1x13, 1x14,1x14</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="results" class="section level2">
+<h2>2019 Results</h2>
+<p>Here how the 2019 tournament played out with respect to these averages:</p>
+<div id="champion-1" class="section level4">
+<h4>Champion</h4>
+<table>
+<thead>
+<tr class="header">
+<th>Seed</th>
+<th>1</th>
+<th>2</th>
+<th>3</th>
+<th>4</th>
+<th>5</th>
+<th>6</th>
+<th>7</th>
+<th>8</th>
+<th>9</th>
+<th>10</th>
+<th>11</th>
+<th>12</th>
+<th>13</th>
+<th>14</th>
+<th>15</th>
+<th>16</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Average</td>
+<td>0.6</td>
+<td>0.1</td>
+<td>0.1</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+</tr>
+<tr class="even">
+<td>2019</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="championship-game-1" class="section level4">
+<h4>Championship Game</h4>
+<table>
+<thead>
+<tr class="header">
+<th>Seed</th>
+<th>1</th>
+<th>2</th>
+<th>3</th>
+<th>4</th>
+<th>5</th>
+<th>6</th>
+<th>7</th>
+<th>8</th>
+<th>9</th>
+<th>10</th>
+<th>11</th>
+<th>12</th>
+<th>13</th>
+<th>14</th>
+<th>15</th>
+<th>16</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Average</td>
+<td>1.0</td>
+<td>0.4</td>
+<td>0.3</td>
+<td>0.1</td>
+<td>0.1</td>
+<td>0.1</td>
+<td>0.0</td>
+<td>0.1</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+</tr>
+<tr class="even">
+<td>2019</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="final-four-1" class="section level4">
+<h4>Final Four</h4>
+<table>
+<thead>
+<tr class="header">
+<th>Seed</th>
+<th>1</th>
+<th>2</th>
+<th>3</th>
+<th>4</th>
+<th>5</th>
+<th>6</th>
+<th>7</th>
+<th>8</th>
+<th>9</th>
+<th>10</th>
+<th>11</th>
+<th>12</th>
+<th>13</th>
+<th>14</th>
+<th>15</th>
+<th>16</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Average</td>
+<td>1.6</td>
+<td>0.8</td>
+<td>0.5</td>
+<td>0.4</td>
+<td>0.2</td>
+<td>0.1</td>
+<td>0.1</td>
+<td>0.1</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.1</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+</tr>
+<tr class="even">
+<td>2019</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="elite-8" class="section level4">
+<h4>Elite 8</h4>
+<table>
+<thead>
+<tr class="header">
+<th>Seed</th>
+<th>1</th>
+<th>2</th>
+<th>3</th>
+<th>4</th>
+<th>5</th>
+<th>6</th>
+<th>7</th>
+<th>8</th>
+<th>9</th>
+<th>10</th>
+<th>11</th>
+<th>12</th>
+<th>13</th>
+<th>14</th>
+<th>15</th>
+<th>16</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Average</td>
+<td>2.8</td>
+<td>1.8</td>
+<td>1.0</td>
+<td>0.6</td>
+<td>0.2</td>
+<td>0.4</td>
+<td>0.3</td>
+<td>0.2</td>
+<td>0.1</td>
+<td>0.2</td>
+<td>0.2</td>
+<td>0.6</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+<td>0.0</td>
+</tr>
+<tr class="even">
+<td>2019</td>
+<td>3</td>
+<td>2</td>
+<td>2</td>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="sweet-16" class="section level4">
+<h4>Sweet 16</h4>
+<table>
+<thead>
+<tr class="header">
+<th>Seed</th>
+<th>1</th>
+<th>2</th>
+<th>3</th>
+<th>4</th>
+<th>5</th>
+<th>6</th>
+<th>7</th>
+<th>8</th>
+<th>9</th>
+<th>10</th>
+<th>11</th>
+<th>12</th>
+<th>13</th>
+<th>14</th>
+<th>15</th>
+<th>16</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Average</td>
+<td>3.4</td>
+<td>2.5</td>
+<td>2.1</td>
+<td>1.9</td>
+<td>1.4</td>
+<td>1.2</td>
+<td>0.8</td>
+<td>0.4</td>
+<td>0.2</td>
+<td>0.7</td>
+<td>0.6</td>
+<td>0.6</td>
+<td>0.2</td>
+<td>0.1</td>
+<td>0.0</td>
+<td>0.0</td>
+</tr>
+<tr class="even">
+<td>2019</td>
+<td>4</td>
+<td>4</td>
+<td>4</td>
+<td>2</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="round-of-32" class="section level4">
+<h4>Round of 32</h4>
+<table>
+<thead>
+<tr class="header">
+<th>Seed</th>
+<th>1</th>
+<th>2</th>
+<th>3</th>
+<th>4</th>
+<th>5</th>
+<th>6</th>
+<th>7</th>
+<th>8</th>
+<th>9</th>
+<th>10</th>
+<th>11</th>
+<th>12</th>
+<th>13</th>
+<th>14</th>
+<th>15</th>
+<th>16</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Average</td>
+<td>4.0</td>
+<td>3.8</td>
+<td>3.4</td>
+<td>3.2</td>
+<td>2.6</td>
+<td>2.5</td>
+<td>2.5</td>
+<td>2.0</td>
+<td>2.0</td>
+<td>1.5</td>
+<td>1.5</td>
+<td>1.4</td>
+<td>0.8</td>
+<td>0.6</td>
+<td>0.2</td>
+<td>0.0</td>
+</tr>
+<tr class="even">
+<td>2019</td>
+<td>4</td>
+<td>4</td>
+<td>4</td>
+<td>3</td>
+<td>1</td>
+<td>3</td>
+<td>1</td>
+<td>0</td>
+<td>4</td>
+<td>3</td>
+<td>1</td>
+<td>3</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="closing-thoughts" class="section level2">
+<h2>Closing Thoughts</h2>
+<p>I was caught off guard by the variance in seed combinations from Final Four down through the Round of 32. Before doing the analysis I thought surely collapsing the data into seed combinations would eliminate more of the complexity in the tournament than it did. I still thought that looking at the distribution of seed combinations was interesting and valuable where it made sense, but was comfortable abandoning it when it no longer did.</p>
+<p>The more difficult piece to this is selecting <em>which</em> teams of each seed to select. For example, I know there are on average going to be 2 No. 1 seeds in the Final Four, but which 2 No. 1 seeds do I pick? As of this writing they are no longer available online, but my approach was to use the pre-tournament probabilities from 538<a href="#fn6" class="footnoteRef" id="fnref6"><sup>6</sup></a>. According to their simulated results, the most likely No. 1 seeds to reach the Final Four were Duke and Virginia, so that’s what I selected.</p>
+<p>This year I participated in two different pools with the same bracket and was actually leading in both of them heading into the championship game. I lost both when Virginia held off Texas Tech in overtime. I was certainly lucky with some picks to be in that position so late in the tournament, but I’d like to think it wasn’t pure luck. Instead I prefer to think that it was data informed luck, which is what I was going for the whole time.</p>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Kane, John (April 8, 2018). <a href="https://www.johnckane.com/blog/ncaa-first-round-upsets/">“NCAA Men’s Tournament First Round Upsets”</a>. Retrieved April 17, 2019.<a href="#fnref1">↩</a></p></li>
+<li id="fn2"><p><a href="https://www.kaggle.com/c/mens-machine-learning-competition-2019">“Google Cloud &amp; NCAA® ML Competition 2019-Men’s”</a>. Retrieved April 18, 2019.<a href="#fnref2">↩</a></p></li>
+<li id="fn3"><p>Visel, Edward (July 28, 2018). <a href="https://alistaire.rbind.io/blog/coalescing-joins/">“Coalescing Joins in dplyr”</a>. Retrieved April 18, 2019.<a href="#fnref3">↩</a></p></li>
+<li id="fn4"><p>Thoen, Edwin (August 25, 2017). <a href="https://edwinth.github.io/blog/dplyr-recipes/">“Tidy evaluation, most common actions”</a>. Retrieved April 18, 2019.<a href="#fnref4">↩</a></p></li>
+<li id="fn5"><p>Wilco, Daniel (March 25, 2019). <a href="https://www.ncaa.com/news/basketball-men/bracketiq/2019-03-20/perfect-ncaa-bracket-absurd-odds-march-madness-dream">“A perfect NCAA bracket: The absurd odds of the March Madness dream”</a>. Retrieved April 18, 2019.<a href="#fnref5">↩</a></p></li>
+<li id="fn6"><p><a href="https://projects.fivethirtyeight.com/2019-march-madness-predictions/">“2019 March Madness Predictions”</a>. Retrieved April 18, 2019.<a href="#fnref6">↩</a></p></li>
+</ol>
+</div>
