@@ -1,0 +1,101 @@
+---
+title: An Equivalent to Convention for Batting Average
+author: ''
+date: '2019-10-21'
+slug: an-equivalent-to-convention-for-batting-average
+categories:
+  - baseball
+tags:
+  - baseball
+  - ops
+---
+
+The game of baseball has moved on statistically from batting average and RBIs. There are different metrics that are used to evaluate player skill and contribution. Moneyball came out 16 years ago, but I don't have a sense that the newer metrics.
+
+If there were a single metric used to evaluate offensive player skill it would probably be WAR (Wins Above Replacement). The calculations that determine WAR vary by the source (Baseball Reference, Fan Graphs, ESPN, etc.) and are closed.
+
+A different metric that can easily be calculated consistently and faithfully is OPS (On-base Plus Slugging) which is, easily enough, On Base Percentage (OBP) plus Slugging Percentage (SLG). 
+
+But what values are indicative of good performance? For many years casually and conventionally, a .300 hitter was considered good. Someone hitting below .200 was a real liability. A .330 hitter was outstanding. 
+
+While Batting Average and OPS measure very different things, and OPS is more indicative of total offensive contribution, what are the equivalent values for a .200, .300, and .330 hitter?
+
+To answer this I'll evaluate the percentiles of each of those averages over time, and then look to see in the equivalent percentiles of OPS those values fall. 
+
+## Data and R packages  
+
+```{r}
+library(tidyverse)
+library(Lahman)
+```
+
+## Q
+
+
+```{r}
+data(Batting)
+min(Batting$yearID)
+```
+
+```{r}
+head(Batting)
+```
+
+
+
+
+
+https://en.wikipedia.org/wiki/Major_League_Baseball_schedule#Historical_season_schedules
+
+We will use the following rubric:
+*1920 - 1961: 154 games 478 PA
+* 1962 - present: 162 games 503 PA
+
+
+https://en.wikipedia.org/wiki/Slugging_percentage
+
+https://en.wikipedia.org/wiki/On-base_percentage
+
+https://en.wikipedia.org/wiki/Plate_appearance
+
+
+```{r}
+batter_season_summary <-
+  Batting %>%
+  filter(yearID >= 1920) %>%
+  group_by(yearID,playerID) %>%
+  summarise(total_ab = sum(AB),
+            total_h = sum(H),
+            total_2b = sum(X2B),
+            total_3b = sum(X3B),
+            total_hr = sum(HR),
+            total_bb = sum(BB),
+            total_ibb = sum(IBB),
+            total_hbp = sum(HBP),
+            total_sf = sum(SF),
+            total_pa = sum(AB) + sum(BB) + sum(IBB) + sum(SF) + sum(HBP)
+            ) %>%
+  mutate(avg = total_h/total_ab,
+         slg = ((total_h - total_2b - total_3b - total_hr) + 2*total_2b + 3*total_3b + 4*total_hr)/ total_ab,
+         obp = (total_h + total_bb + total_ibb + total_hbp)/(total_ab + total_bb + total_ibb + total_hbp + total_sf),
+         ops = obp + slg) %>%
+  filter((yearID <= 1961 & total_pa >= 478) |
+          yearID >= 1962 & total_pa >= 503) 
+```
+
+
+```{r}
+head(batter_season_summary)
+```
+
+```{r}
+
+```
+
+
+
+
+## Any difference between AL and NL
+
+
+
