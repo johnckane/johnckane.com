@@ -88,10 +88,82 @@ batter_season_summary <-
 head(batter_season_summary)
 ```
 
+
 ```{r}
+year2000 <-
+  batter_season_summary %>%
+  filter(yearID == 2000)
+
+ecdf(year2000$avg)(0.200)
 
 ```
 
+
+```{r}
+three_hundred_hitters <-
+batter_season_summary %>%
+  split(.$yearID) %>% # from base R
+  map_dbl(~ecdf(.$avg)(0.300))
+
+three_thirty_hitters <-
+  batter_season_summary %>%
+  split(.$yearID) %>% # from base R
+  map_dbl(~ecdf(.$avg)(0.330))
+
+two_hundred_hitters <- 
+  batter_season_summary %>%
+  split(.$yearID) %>% # from base R
+  map_dbl(~ecdf(.$avg)(0.200))
+
+
+length(two_hundred_hitters)
+length(three_thirty_hitters)
+length(three_hundred_hitters)
+
+cbind(two_hundred_hitters,three_hundred_hitters,three_thirty_hitters)
+
+
+c(two_hundred_hitters["1974"],three_hundred_hitters["1974"],three_thirty_hitters["1974"])
+cbind(two_hundred_hitters,three_hundred_hitters,three_thirty_hitters)["1974",]
+
+result_data <- cbind(two_hundred_hitters,three_hundred_hitters,three_thirty_hitters)
+result_data <- as.data.frame(result_data)
+result_data <- tibble::rownames_to_column(result_data, "year")
+result_data$year <- as.numeric(result_data$year)
+head(result_data)
+```
+
+```{r}
+long_result_data <- 
+result_data %>%
+  pivot_longer(-year,names_to = "group", values_to = "value") %>%
+  filter(year != 1994)
+```
+
+# plot!
+```{r}
+ggplot(data = long_result_data,
+       aes(x = year,
+           y = value,
+           group = group)) +
+  geom_line() +
+  geom_smooth(method = "lm")
+```
+
+```{r}
+long_result_data %>%
+  group_by(group) %>%
+  summarise(mean = mean(value))
+```
+
+
+# now do ops
+
+```{r}
+batter_season_summary %>%
+  split(.$yearID) %>% # from base R
+  map_df(~quantile(x = .$ops, probs = c(.002,.804,.970)))
+```
 
 
 
