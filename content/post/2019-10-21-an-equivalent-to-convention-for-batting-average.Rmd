@@ -1,7 +1,7 @@
 ---
 title: An Equivalent to Convention for Batting Average
 author: ''
-date: '2019-10-21'
+date: '2020-01-14'
 slug: an-equivalent-to-convention-for-batting-average
 categories:
   - baseball
@@ -22,6 +22,10 @@ While Batting Average and OPS measure very different things, and OPS is more ind
 
 To answer this I'll evaluate the percentiles of each of those averages over time, and then look to see in the equivalent percentiles of OPS those values fall. 
 
+
+I can't say for sure how back it goes, but since at least the middle of the 1910s .300 has been described as "a batting mark at which all great players aim"[^1] and "the North Pole of the game"[^2]
+
+
 ## Data and R packages  
 
 ```{r}
@@ -29,34 +33,12 @@ library(tidyverse)
 library(Lahman)
 ```
 
-## Q
+## Methodology
+
+Major League Baseball uses the guidleine of 3.1 plate appearances per team game to qualify for league leading batting title for batting average, on-base percentage, and slugging percentage[^3]. From 1920 through 1961 the season was 154 games long (indicating 478 plate appearances required) and from 1962 to the present the season was 162 games long (indicating 503 plate appearances required)[^4]. 
 
 
-```{r}
-data(Batting)
-min(Batting$yearID)
-```
-
-```{r}
-head(Batting)
-```
-
-
-
-
-
-https://en.wikipedia.org/wiki/Major_League_Baseball_schedule#Historical_season_schedules
-
-We will use the following rubric:
-*1920 - 1961: 154 games 478 PA
-* 1962 - present: 162 games 503 PA
-
-
-https://en.wikipedia.org/wiki/Slugging_percentage
-
-https://en.wikipedia.org/wiki/On-base_percentage
-
-https://en.wikipedia.org/wiki/Plate_appearance
+We'll use for [^5,6,7]
 
 
 ```{r}
@@ -84,19 +66,9 @@ batter_season_summary <-
 ```
 
 
-```{r}
-head(batter_season_summary)
-```
+To determine equivalents of a .300 hitter in the other statistical categories we'll need to know where in the distribution of all qualifying batting averages the .300 mark is. And additionally, how has that changed over time?
 
-
-```{r}
-year2000 <-
-  batter_season_summary %>%
-  filter(yearID == 2000)
-
-ecdf(year2000$avg)(0.200)
-
-```
+To accomplish this task computationally use functions from the `purrr` package and the `ecdf()` function from Base R. 
 
 
 ```{r}
@@ -170,4 +142,11 @@ batter_season_summary %>%
 ## Any difference between AL and NL
 
 
+[^1]: St. Nicholas Volume 42. Retrieved January 14, 2020. 
+[^2]: The American Magazine, Volume 70. Retrieved January 14, 2010.
+[^3]: mlb.com/stats. Retrieved January 14, 2020. 
+[^4]: https://en.wikipedia.org/wiki/Major_League_Baseball_schedule#Historical_season_schedules. Retrieved January 14, 2020.
+[^5]: https://en.wikipedia.org/wiki/Plate_appearance Retrieved January 14, 2020.
+[^6]: https://en.wikipedia.org/wiki/Slugging_percentage Retrieved January 14, 2020.
+[^7]: https://en.wikipedia.org/wiki/On-base_percentage Retrieved January 14, 2020.
 
